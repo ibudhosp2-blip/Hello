@@ -1,0 +1,1069 @@
+<title>Bathroom Slip Trap</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap">
+<style>
+/* Layout: full-bleed LiDAR viewport, HUD pinned to the corners, evidence sheet slides up (phone) or docks right (desktop). Single dark look by choice. */
+:root{
+  --void:#04080b;
+  --void-2:#0a1318;
+  --panel:rgba(8,15,19,.92);
+  --line:rgba(98,214,226,.22);
+  --scan:#62d6e2;
+  --scan-dim:#2d7480;
+  --tag:#ffb547;
+  --tag-ink:#1d1305;
+  --paper:#e4eef0;
+  --muted:#8ea3a9;
+  --blood:#e8665a;
+  --ok:#7fe0a7;
+  --f-display:"Chakra Petch","IBM Plex Sans Thai",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans Thai",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  color-scheme:dark;
+}
+[hidden]{display:none!important}
+html,body{height:100%;overflow:hidden}
+body{background:var(--void);color:var(--paper);font:15px/1.6 var(--f-body);-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
+#scene{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab;outline:none}
+#scene:active{cursor:grabbing}
+button{font:inherit;color:inherit}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.dim{color:var(--muted)}
+
+/* top bar */
+.top{position:fixed;top:calc(env(safe-area-inset-top,0px) + 12px);left:16px;right:16px;display:flex;flex-wrap:wrap;gap:10px 16px;align-items:flex-start;justify-content:space-between;pointer-events:none;z-index:5}
+.case{min-width:0}
+.eyebrow{font:500 11px/1.3 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--scan)}
+.case h1{margin:2px 0 0;font:600 clamp(18px,4.6vw,24px)/1.2 var(--f-display);text-wrap:balance;text-shadow:0 1px 12px rgba(0,0,0,.8)}
+.steps{list-style:none;margin:0;padding:0;display:flex;gap:6px}
+.steps li{font:500 12px/1 var(--f-display);letter-spacing:.03em;padding:7px 10px;border:1px solid var(--line);color:var(--muted);background:rgba(4,8,11,.6);display:flex;gap:6px;align-items:center}
+.steps li b{font-family:var(--f-mono);font-weight:500;color:var(--scan-dim)}
+.steps li.on{color:var(--tag);border-color:var(--tag)}
+.steps li.on b{color:var(--tag)}
+.steps li.done{color:var(--ok);border-color:rgba(127,224,167,.45)}
+.steps li.done b{color:var(--ok)}
+.hud{position:fixed;left:16px;top:calc(env(safe-area-inset-top,0px) + 96px);font-size:11px;line-height:1.7;color:var(--scan);opacity:.85;pointer-events:none;z-index:4;text-shadow:0 0 8px rgba(0,0,0,.9)}
+.hud span{display:block}
+body[data-mode="real"] .hud{color:var(--tag)}
+
+/* crosshair + overlays */
+.cross{position:fixed;left:50%;top:50%;width:22px;height:22px;margin:-11px 0 0 -11px;pointer-events:none;opacity:.35;z-index:2}
+.cross::before,.cross::after{content:"";position:absolute;background:var(--scan)}
+.cross::before{left:10px;top:0;width:1px;height:22px}
+.cross::after{top:10px;left:0;height:1px;width:22px}
+body[data-mode="real"] .cross{display:none}
+.vignette{position:fixed;inset:0;pointer-events:none;z-index:1;opacity:0;transition:opacity .4s;background:radial-gradient(ellipse at 50% 45%,transparent 45%,rgba(0,0,0,.65) 100%)}
+body[data-mode="real"] .vignette{opacity:1}
+.scanlines{position:fixed;inset:0;pointer-events:none;z-index:1;background:repeating-linear-gradient(0deg,rgba(98,214,226,.035) 0 1px,transparent 1px 3px)}
+body[data-mode="real"] .scanlines{display:none}
+#flash{position:fixed;inset:0;z-index:30;pointer-events:none;opacity:0;transition:opacity .32s ease;display:grid;place-items:center;background:radial-gradient(circle at 50% 50%,rgba(170,245,255,.95),rgba(40,140,160,.9) 45%,rgba(4,8,11,.98) 100%)}
+#flash span{font:500 13px var(--f-mono);letter-spacing:.06em;color:var(--void)}
+#flash.on{opacity:1}
+
+/* bottom bar */
+.bottom{position:fixed;left:16px;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 14px);display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;justify-content:space-between;z-index:5;pointer-events:none;transition:opacity .25s}
+.bottom > *{pointer-events:auto}
+body[data-mode="real"] .bottom{opacity:0;pointer-events:none}
+body[data-mode="real"] .bottom > *{pointer-events:none}
+.hint{margin:0;flex:1 1 240px;min-width:0;font-size:13px;line-height:1.5;color:var(--paper);background:rgba(4,8,11,.72);border-left:2px solid var(--tag);padding:8px 12px;max-width:440px}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn{appearance:none;border:1px solid var(--line);background:rgba(8,15,19,.85);padding:10px 14px;font:600 14px/1.1 var(--f-display);letter-spacing:.02em;cursor:pointer;display:inline-flex;gap:8px;align-items:center;min-height:44px}
+.btn b{font:500 12px var(--f-mono);color:var(--scan)}
+.btn:hover{border-color:var(--scan)}
+.btn:focus-visible{outline:2px solid var(--tag);outline-offset:2px}
+.btn.primary{background:var(--tag);color:var(--tag-ink);border-color:var(--tag)}
+.btn.primary b{color:var(--tag-ink)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.ghost{background:rgba(4,8,11,.6)}
+
+/* toast */
+.toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 150px);transform:translate(-50%,-6px);background:var(--panel);border:1px solid var(--tag);color:var(--paper);padding:8px 14px;font-size:13px;max-width:calc(100% - 32px);text-align:center;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:20}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+
+/* evidence sheet */
+.sheet{position:fixed;z-index:10;background:var(--panel);border-top:1px solid var(--tag);left:0;right:0;bottom:0;max-height:50%;overflow:auto;padding:16px 16px calc(env(safe-area-inset-bottom,0px) + 16px);display:flex;flex-direction:column;gap:10px;animation:rise .35s ease both;-webkit-user-select:text;user-select:text;backdrop-filter:blur(6px)}
+@keyframes rise{from{transform:translateY(24px);opacity:0}to{transform:none;opacity:1}}
+@media (min-width:820px){
+  .sheet{left:auto;right:16px;top:calc(env(safe-area-inset-top,0px) + 84px);bottom:calc(env(safe-area-inset-bottom,0px) + 16px);width:380px;max-height:none;border:1px solid var(--line);border-top:3px solid var(--tag);padding:20px}
+  @keyframes rise{from{transform:translateX(24px);opacity:0}to{transform:none;opacity:1}}
+}
+.sheet-head{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.tag{display:inline-block;background:var(--tag);color:var(--tag-ink);font:700 12px/1 var(--f-display);letter-spacing:.06em;padding:6px 8px 5px;text-transform:uppercase}
+.sheet h2{margin:0;font:600 22px/1.25 var(--f-display);text-wrap:balance}
+.lead{margin:0;color:var(--paper);font-size:15px}
+.facts{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}
+.facts li{position:relative;padding-left:18px;font-size:14px;color:#c9d6d9}
+.facts li::before{content:"";position:absolute;left:2px;top:.62em;width:7px;height:7px;border:1.5px solid var(--scan)}
+.note{margin:0;font-size:14px;padding:10px 12px;border:1px dashed var(--tag);color:var(--tag);background:rgba(255,181,71,.06)}
+.note::before{content:"ข้อสังเกต · ";font-weight:600}
+.sheet .btn{align-self:flex-start;margin-top:4px}
+.small{font-size:12px;color:var(--muted);margin:0}
+
+/* notebook */
+.book{position:fixed;z-index:12;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 74px);width:min(380px,calc(100% - 32px));max-height:calc(100% - 200px);overflow:auto;background:var(--panel);border:1px solid var(--line);padding:16px;display:flex;flex-direction:column;gap:10px;animation:rise .25s ease both}
+.book header{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.book h3{margin:0;font:600 17px var(--f-display)}
+.x{appearance:none;border:1px solid var(--line);background:transparent;width:36px;height:36px;cursor:pointer;font-size:18px;line-height:1}
+.x:focus-visible{outline:2px solid var(--tag)}
+.book ol{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+.book li button{width:100%;text-align:left;appearance:none;border:1px solid var(--line);background:rgba(4,8,11,.5);padding:10px 12px;cursor:pointer;display:grid;grid-template-columns:28px 1fr;gap:2px 10px;align-items:start}
+.book li button:focus-visible{outline:2px solid var(--tag)}
+.book li .n{grid-row:span 2;font:600 16px var(--f-mono);color:var(--scan-dim)}
+.book li .t{font:600 14px var(--f-display)}
+.book li .s{font-size:12.5px;color:var(--muted);line-height:1.45}
+.book li.got .n{color:var(--ok)}
+.book li.got button{border-color:rgba(127,224,167,.35)}
+
+/* modals */
+.modal{position:fixed;inset:0;z-index:25;display:grid;place-items:center;background:rgba(2,5,7,.72);padding:16px;backdrop-filter:blur(3px)}
+.modal-box{width:100%;max-width:580px;max-height:calc(100% - 8px);overflow:auto;background:var(--void-2);border:1px solid var(--line);border-top:3px solid var(--tag);padding:24px 22px;display:flex;flex-direction:column;gap:14px;-webkit-user-select:text;user-select:text}
+.modal-box h2{margin:0;font:700 clamp(24px,6vw,32px)/1.15 var(--f-display);text-wrap:balance}
+.modal-box p{margin:0;max-width:62ch}
+.tape{font:600 11px/1 var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--tag-ink);background:repeating-linear-gradient(-45deg,var(--tag) 0 14px,#e09a2c 14px 28px);padding:6px 10px;align-self:flex-start}
+.brief{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:13.5px;margin:0}
+.brief dt{color:var(--muted);font-family:var(--f-mono);font-size:12px;padding-top:2px}
+.brief dd{margin:0}
+.loop{margin:0;padding:0;list-style:none;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.loop li{border:1px solid var(--line);padding:10px;font-size:13px;line-height:1.4;min-width:0}
+.loop li b{display:block;font:600 12px var(--f-mono);color:var(--scan);margin-bottom:4px}
+@media (max-width:460px){.loop{grid-template-columns:1fr}}
+.howto{margin:0;padding-left:18px;font-size:13.5px;color:#c9d6d9;display:flex;flex-direction:column;gap:4px}
+.howto em{font-style:normal;color:var(--tag)}
+
+fieldset{border:1px solid var(--line);padding:12px 14px 14px;margin:0;display:flex;flex-direction:column;gap:6px;min-width:0}
+legend{font:600 15px var(--f-display);padding:0 6px}
+.opt{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border:1px solid transparent;cursor:pointer;font-size:14px}
+.opt:hover{border-color:var(--line)}
+.opt input{accent-color:var(--tag);margin-top:5px;flex:none}
+.opt:has(input:checked){border-color:var(--tag);background:rgba(255,181,71,.07)}
+.opt:has(input:focus-visible){outline:2px solid var(--tag)}
+.verdict{display:flex;flex-direction:column;gap:10px}
+.score{font:700 44px/1 var(--f-display);color:var(--tag)}
+.score small{font-size:18px;color:var(--muted)}
+.ans{border-left:3px solid var(--ok);padding:6px 12px;font-size:13.5px}
+.ans.bad{border-color:var(--blood)}
+.ans strong{display:block;font-family:var(--f-display);font-size:14.5px}
+.ans .mark{font-family:var(--f-mono);font-size:12px}
+.ans.good .mark{color:var(--ok)}
+.ans.bad .mark{color:var(--blood)}
+.timeline{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.timeline li::marker{font-family:var(--f-mono);color:var(--tag)}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+
+@media (max-width:560px){
+  .steps li{padding:6px 7px;font-size:11px}
+  .hud{top:calc(env(safe-area-inset-top,0px) + 112px)}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+}
+</style>
+
+<canvas id="scene" tabindex="0" aria-label="ภาพสแกน LiDAR ของห้องน้ำ ลากเพื่อหมุน แตะสองครั้งที่จุดสีส้มเพื่อตรวจ"></canvas>
+<div class="scanlines" aria-hidden="true"></div>
+<div class="vignette" aria-hidden="true"></div>
+<div class="cross" aria-hidden="true"></div>
+
+<header class="top">
+  <div class="case">
+    <div class="eyebrow">คดี BKK-2610-07 · ห้องน้ำคอนโด ชั้น 31</div>
+    <h1>ลื่นล้ม… หรือจัดฉาก?</h1>
+  </div>
+  <ol class="steps" aria-label="ขั้นตอนการสืบสวน">
+    <li data-step="1"><b>1</b>ตรวจศพ</li>
+    <li data-step="2"><b>2</b>เก็บพยาน</li>
+    <li data-step="3"><b>3</b>สรุปคดี</li>
+  </ol>
+</header>
+
+<div class="hud mono" id="hud" aria-hidden="true">
+  <span id="hudMode">LIDAR · SCAN 01</span>
+  <span id="hudPts">0 PTS</span>
+  <span id="hudRange">RANGE 0.00 m</span>
+  <span id="hudHead">HDG 000°</span>
+</div>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<footer class="bottom">
+  <p id="hint" class="hint">ลากเพื่อหมุนรอบห้อง แล้วแตะสองครั้งที่วงสีส้มเพื่อซูมเข้าไปตรวจ</p>
+  <div class="actions">
+    <button id="resetView" class="btn ghost" type="button">มุมมองรวม</button>
+    <button id="bookBtn" class="btn" type="button" aria-expanded="false" aria-controls="book">สมุดหลักฐาน <b id="count">0/5</b></button>
+    <button id="solveBtn" class="btn primary" type="button" disabled>สรุปคดี</button>
+  </div>
+</footer>
+
+<aside id="sheet" class="sheet" hidden aria-live="polite">
+  <div class="sheet-head"><span class="tag" id="sheetTag">หลักฐาน 1</span><span class="mono dim" id="sheetMeta"></span></div>
+  <h2 id="sheetTitle"></h2>
+  <p class="lead" id="sheetLead"></p>
+  <ul class="facts" id="sheetFacts"></ul>
+  <p class="note" id="sheetNote"></p>
+  <p class="small">ภาพจำลองสร้างจากพอยต์คลาวด์ ลากเพื่อดูมุมอื่น ถ่างสองนิ้วเพื่อซูม</p>
+  <button id="backBtn" class="btn" type="button">← กลับไปมุมมอง LiDAR</button>
+</aside>
+
+<aside id="book" class="book" hidden>
+  <header><h3>สมุดหลักฐาน</h3><button class="x" id="bookClose" type="button" aria-label="ปิดสมุดหลักฐาน">×</button></header>
+  <ol id="bookList"></ol>
+  <p class="small">แตะรายการที่ตรวจแล้วเพื่อกลับไปดูภาพอีกครั้ง</p>
+</aside>
+
+<div id="intro" class="modal">
+  <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="introTitle">
+    <span class="tape">Crime scene · do not cross</span>
+    <h2 id="introTitle">อุบัติเหตุลื่นล้ม… หรือจงใจจัดฉาก?</h2>
+    <dl class="brief">
+      <dt>แจ้งเหตุ</dt><dd>06:42 น. แม่บ้านเปิดห้องน้ำแล้วพบผู้เสียชีวิต</dd>
+      <dt>สถานที่</dt><dd>ห้องน้ำคอนโดหรู ชั้น 31</dd>
+      <dt>ผู้ตาย</dt><dd>หญิงอายุ 29 ปี นอนคว่ำหน้าในอ่างอาบน้ำที่ไม่มีน้ำ ท้ายทอยแตก มีเลือดออก</dd>
+      <dt>คำให้การ</dt><dd>แฟนหนุ่มของผู้ตายยืนยันว่า “เธอคงลื่นล้มหัวฟาดอ่างเอง”</dd>
+    </dl>
+    <p>ทีมสแกน LiDAR บันทึกห้องไว้ครบแล้ว หน้าที่ของคุณคือตรวจทุกจุดแล้วตัดสินว่าเกิดอะไรขึ้นจริง</p>
+    <ol class="loop">
+      <li><b>01 ตรวจศพ</b>ดูบาดแผลและท่านอนของผู้ตาย</li>
+      <li><b>02 เก็บพยาน</b>ตรวจพื้น เคาน์เตอร์ กระจก และตู้ยา</li>
+      <li><b>03 สรุปคดี</b>อุบัติเหตุ ฆาตกรรม หรือจัดฉาก</li>
+    </ol>
+    <ul class="howto">
+      <li><em>ลากนิ้ว</em> เพื่อหมุนรอบห้อง</li>
+      <li><em>ถ่างสองนิ้ว</em> เพื่อซูม <em>ลากสองนิ้ว</em> เพื่อเลื่อน (คอมพิวเตอร์: ล้อเมาส์ / คลิกขวาลาก)</li>
+      <li><em>แตะสองครั้ง</em> ที่วงสีส้มเพื่อซูมเข้าไปดูภาพเสมือนจริง</li>
+    </ul>
+    <button id="startBtn" class="btn primary" type="button">เริ่มตรวจที่เกิดเหตุ</button>
+  </div>
+</div>
+
+<div id="solve" class="modal" hidden>
+  <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="solveTitle">
+    <span class="tape">Case report · BKK-2610-07</span>
+    <h2 id="solveTitle">สรุปคดี</h2>
+    <form id="solveForm" class="verdict"></form>
+    <div id="result" class="verdict" hidden></div>
+  </div>
+</div>
+
+<div id="flash" aria-hidden="true"><span>กำลังสร้างภาพจากพอยต์คลาวด์…</span></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(() => {
+'use strict';
+const $ = s => document.querySelector(s);
+const V3 = THREE.Vector3;
+const W = 3.2, D = 2.6, H = 2.5, CZ = -0.9, TX = -0.675;
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// seeded RNG so the scan looks identical on every load
+let seed = 20261005;
+const R = () => { seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+
+/* ---------- renderer ---------- */
+const canvas = $('#scene');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+const PR = Math.min(window.devicePixelRatio || 1, 2);
+renderer.setPixelRatio(PR);
+renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(52, 1, 0.02, 60);
+const BG_LIDAR = new THREE.Color(0x04080b), BG_REAL = new THREE.Color(0x030405);
+scene.background = BG_LIDAR;
+
+// soft studio environment for reflections on chrome, glass and the mirror
+(() => {
+  const pm = new THREE.PMREMGenerator(renderer);
+  const es = new THREE.Scene();
+  const box = new THREE.Mesh(new THREE.BoxGeometry(12, 8, 12), new THREE.MeshBasicMaterial({ side: THREE.BackSide }));
+  box.material.color.setRGB(0.4, 0.38, 0.35); es.add(box);
+  const lp = (rgb, pos, size) => {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(size[0], size[1]), new THREE.MeshBasicMaterial({ side: THREE.DoubleSide }));
+    m.material.color.setRGB(rgb[0], rgb[1], rgb[2]); m.position.set(pos[0], pos[1], pos[2]); m.lookAt(0, 0, 0); es.add(m);
+  };
+  lp([3.6, 3.4, 3.1], [0, 3.9, 0], [3, 3]);
+  lp([2.2, 2.3, 2.5], [5.9, 1, 0], [3, 2]);
+  lp([1.4, 1.3, 1.2], [-5.9, 0.5, 1], [2, 2]);
+  scene.environment = pm.fromScene(es, 0.035).texture;
+  pm.dispose();
+})();
+
+const realGroup = new THREE.Group(), lidarGroup = new THREE.Group(), markerGroup = new THREE.Group();
+scene.add(realGroup, lidarGroup, markerGroup);
+const mainSet = new THREE.Group(); realGroup.add(mainSet);
+
+/* ---------- helpers ---------- */
+// r128 reads hex colors as linear; convert so the swatches match on screen
+const M = (color, o = {}) => {
+  const m = new THREE.MeshStandardMaterial(Object.assign({ color, roughness: 0.6, metalness: 0 }, o));
+  m.color.convertSRGBToLinear(); m.emissive.convertSRGBToLinear();
+  return m;
+};
+function mesh(geo, mat, pos, opt = {}) {
+  const m = new THREE.Mesh(geo, mat);
+  m.position.set(pos[0], pos[1], pos[2]);
+  if (opt.rot) m.rotation.set(opt.rot[0], opt.rot[1], opt.rot[2]);
+  if (opt.scale) m.scale.set(opt.scale[0], opt.scale[1], opt.scale[2]);
+  m.castShadow = opt.cast !== false; m.receiveShadow = opt.receive !== false;
+  m.userData = { density: opt.density == null ? 1 : opt.density, refl: opt.refl == null ? 1 : opt.refl, scan: opt.scan !== false, min: opt.min || 0 };
+  (opt.parent || mainSet).add(m);
+  return m;
+}
+function tex(w, h, draw, opt = {}) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const g = c.getContext('2d'); draw(g, w, h);
+  const t = new THREE.CanvasTexture(c);
+  t.encoding = THREE.sRGBEncoding; t.anisotropy = 8;
+  if (opt.repeat) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(opt.repeat[0], opt.repeat[1]); }
+  return t;
+}
+function rr(g, x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
+function veins(g, w, h, n, color) {
+  g.strokeStyle = color;
+  for (let i = 0; i < n; i++) {
+    g.lineWidth = 0.6 + R() * 2.2; g.beginPath();
+    const x = R() * w, y = R() * h; g.moveTo(x, y);
+    g.bezierCurveTo(x + (R() - .5) * w, y + R() * h * .5, x + (R() - .5) * w, y + R() * h, x + (R() - .5) * w * 1.4, y + R() * h);
+    g.stroke();
+  }
+}
+const SPHERE = new THREE.SphereGeometry(1, 32, 20);
+const BOWL = new THREE.SphereGeometry(1, 48, 24, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2);
+
+/* ---------- textures ---------- */
+const floorTex = tex(512, 512, (g, w) => {
+  const s = w / 2;
+  for (let i = 0; i < 2; i++) for (let j = 0; j < 2; j++) {
+    g.fillStyle = `hsl(28,5%,${21 + R() * 5}%)`; g.fillRect(i * s, j * s, s, s);
+    g.save(); g.beginPath(); g.rect(i * s, j * s, s, s); g.clip(); g.translate(i * s, j * s);
+    veins(g, s, s, 7, 'rgba(230,225,215,.07)'); g.restore();
+  }
+  g.strokeStyle = '#8b857b'; g.lineWidth = 5;
+  for (let k = 0; k <= 2; k++) { g.beginPath(); g.moveTo(k * s, 0); g.lineTo(k * s, w); g.stroke(); g.beginPath(); g.moveTo(0, k * s); g.lineTo(w, k * s); g.stroke(); }
+}, { repeat: [W / 1.2, D / 1.2] });
+
+const wallTex = tex(512, 512, (g, w) => {
+  const cw = w / 2, ch = w / 4;
+  for (let r = 0; r < 4; r++) for (let c = -1; c < 3; c++) {
+    const x = c * cw + (r % 2 ? cw / 2 : 0);
+    g.fillStyle = `hsl(36,${14 + R() * 6}%,${85 + R() * 4}%)`; g.fillRect(x, r * ch, cw, ch);
+  }
+  veins(g, w, w, 14, 'rgba(120,108,95,.13)');
+  g.strokeStyle = '#c4baab'; g.lineWidth = 3;
+  for (let r = 0; r <= 4; r++) { g.beginPath(); g.moveTo(0, r * ch); g.lineTo(w, r * ch); g.stroke(); }
+  for (let r = 0; r < 4; r++) for (let c = 0; c <= 2; c++) {
+    const x = c * cw + (r % 2 ? cw / 2 : 0); g.beginPath(); g.moveTo(x, r * ch); g.lineTo(x, (r + 1) * ch); g.stroke();
+  }
+});
+
+const woundTex = tex(256, 256, g => {
+  g.translate(128, 128);
+  for (let i = 0; i < 70; i++) {
+    const a = R() * 6.283, d = R() * 72;
+    g.fillStyle = `rgba(${80 + R() * 50 | 0},${6 + R() * 10 | 0},${6 + R() * 8 | 0},${.22 + R() * .35})`;
+    g.beginPath(); g.ellipse(Math.cos(a) * d, Math.sin(a) * d, 8 + R() * 20, 6 + R() * 14, R() * 3, 0, 7); g.fill();
+  }
+  g.rotate(0.22);
+  const s = 64;
+  const grd = g.createRadialGradient(0, 0, 4, 0, 0, s * .8); grd.addColorStop(0, '#0e0101'); grd.addColorStop(1, '#520808');
+  g.fillStyle = grd; rr(g, -s / 2, -s / 2, s, s, 14); g.fill();
+  g.strokeStyle = 'rgba(210,95,80,.9)'; g.lineWidth = 4; rr(g, -s / 2, -s / 2, s, s, 14); g.stroke();
+  g.strokeStyle = 'rgba(25,0,0,.85)'; g.lineWidth = 2;
+  [[-1, -1], [1, -1], [1, 1], [-1, 1]].forEach(([sx, sy]) => {
+    g.beginPath(); g.moveTo(sx * 24, sy * 24); g.lineTo(sx * (40 + R() * 14), sy * (34 + R() * 16)); g.lineTo(sx * (52 + R() * 10), sy * (48 + R() * 10)); g.stroke();
+  });
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.globalCompositeOperation = 'destination-in';
+  const m = g.createRadialGradient(128, 128, 64, 128, 128, 128); m.addColorStop(0, '#000'); m.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = m; g.fillRect(0, 0, 256, 256);
+});
+
+const smearTex = tex(512, 440, g => {
+  g.lineCap = 'round'; g.lineJoin = 'round'; g.shadowColor = 'rgba(255,245,230,.6)'; g.shadowBlur = 10;
+  for (let f = 0; f < 4; f++) {
+    const x0 = 120 + f * 36, y0 = 40 + Math.abs(f - 1.5) * 16;
+    g.strokeStyle = `rgba(246,238,224,${.45 + R() * .15})`; g.lineWidth = 21 - f * 1.6;
+    g.beginPath(); g.moveTo(x0, y0); g.bezierCurveTo(x0 + 18, y0 + 120, x0 + 60, y0 + 220, x0 + 110 + f * 6, y0 + 340); g.stroke();
+  }
+  g.fillStyle = 'rgba(240,230,214,.32)';
+  g.beginPath(); g.ellipse(390, 150, 46, 60, .4, 0, 7); g.fill();
+  for (let f = 0; f < 4; f++) { g.beginPath(); g.ellipse(352 + f * 24, 64 + Math.abs(f - 1.5) * 8, 9, 15, .3, 0, 7); g.fill(); }
+  g.shadowBlur = 0;
+  for (let i = 0; i < 90; i++) { g.fillStyle = `rgba(250,244,232,${R() * .4})`; g.beginPath(); g.arc(80 + R() * 380, 30 + R() * 380, R() * 3, 0, 7); g.fill(); }
+});
+
+const dustTex = tex(128, 128, g => {
+  g.fillStyle = 'rgba(80,66,44,.42)'; g.fillRect(0, 0, 128, 128);
+  for (let i = 0; i < 500; i++) { g.fillStyle = `rgba(${150 + R() * 60 | 0},${130 + R() * 50 | 0},100,${R() * .35})`; g.fillRect(R() * 128, R() * 128, 1.5, 1.5); }
+  g.globalCompositeOperation = 'destination-out'; rr(g, 26, 26, 76, 76, 12); g.fill();
+  g.globalCompositeOperation = 'source-over'; g.strokeStyle = 'rgba(55,40,20,.7)'; g.lineWidth = 3; rr(g, 26, 26, 76, 76, 12); g.stroke();
+  g.globalCompositeOperation = 'destination-in';
+  const m = g.createRadialGradient(64, 64, 44, 64, 64, 64); m.addColorStop(0, '#000'); m.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = m; g.fillRect(0, 0, 128, 128);
+});
+
+const labelTex = tex(256, 128, g => {
+  g.fillStyle = '#f3efe6'; g.fillRect(0, 0, 256, 128);
+  g.fillStyle = '#e07b2a'; g.fillRect(0, 0, 256, 18);
+  g.fillStyle = '#1b2b3a'; g.font = '700 30px system-ui, sans-serif'; g.fillText('DIAZEPAM', 22, 62);
+  g.font = '500 20px system-ui, sans-serif'; g.fillText('5 mg · 30 tabs · Rx', 22, 94);
+});
+
+const sparkTex = tex(64, 64, g => {
+  const r = g.createRadialGradient(32, 32, 0, 32, 32, 30); r.addColorStop(0, 'rgba(255,255,255,1)'); r.addColorStop(.25, 'rgba(200,240,255,.6)'); r.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = r; g.fillRect(0, 0, 64, 64);
+  g.strokeStyle = 'rgba(255,255,255,.9)'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(32, 2); g.lineTo(32, 62); g.moveTo(2, 32); g.lineTo(62, 32); g.stroke();
+});
+
+/* ---------- materials ---------- */
+const white = M(0xf4f2ee, { roughness: 0.14 });
+const chrome = M(0xdfe3e6, { metalness: 1, roughness: 0.12 });
+const brass = M(0xc29a5e, { metalness: 0.9, roughness: 0.3 });
+const marble = M(0xeeebe5, { roughness: 0.22 });
+const wood = M(0x3e2d23, { roughness: 0.55 });
+const skin = M(0xd6a68a, { roughness: 0.6, envMapIntensity: 0.45 });
+const robe = M(0xe8e1d8, { roughness: 0.85, envMapIntensity: 0.5 });
+const hair = M(0x1a1310, { roughness: 0.6, envMapIntensity: 0.25 });
+const blood = M(0x4a0505, { roughness: 0.2, envMapIntensity: 0.6 });
+const glassMat = M(0xe8f7ff, { roughness: 0.03, metalness: 0.1, transparent: true, opacity: 0.55, envMapIntensity: 2.2, emissive: 0x16262c });
+const mirrorMat = M(0xcfd8dc, { metalness: 1, roughness: 0.04 });
+
+/* ---------- room shell ---------- */
+mesh(new THREE.PlaneGeometry(W, D), M(0xffffff, { map: floorTex, roughness: 0.38 }), [0, 0, 0], { rot: [-Math.PI / 2, 0, 0], cast: false, density: 1, refl: 0.85 });
+
+const walls = [];
+function makeWall(name, len, pos, rotY, normal) {
+  const g = new THREE.Group(); realGroup.add(g);
+  const t = wallTex.clone(); t.needsUpdate = true; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(len / 1.2, H / 1.2);
+  mesh(new THREE.PlaneGeometry(len, H), M(0xffffff, { map: t, roughness: 0.32 }), pos, { rot: [0, rotY, 0], parent: g, cast: false, density: 0.7, refl: 0.9 });
+  const w = { name, group: g, center: new V3(pos[0], pos[1], pos[2]), normal: new V3(normal[0], normal[1], normal[2]), vis: true };
+  walls.push(w); return w;
+}
+makeWall('back', W, [0, H / 2, -D / 2], 0, [0, 0, 1]);
+const wFront = makeWall('front', W, [0, H / 2, D / 2], Math.PI, [0, 0, -1]);
+const wLeft = makeWall('left', D, [-W / 2, H / 2, 0], Math.PI / 2, [1, 0, 0]);
+const wRight = makeWall('right', D, [W / 2, H / 2, 0], -Math.PI / 2, [-1, 0, 0]);
+
+/* ---------- bathtub (rounded rim) ---------- */
+const tubX0 = -1.55, tubX1 = 0.2, tubZ0 = -1.28, tubZ1 = -0.52, rimY = 0.5;
+mesh(new THREE.BoxGeometry(1.75, rimY, 0.1), white, [TX, rimY / 2, tubZ1 - 0.05]);
+mesh(new THREE.BoxGeometry(1.75, rimY, 0.1), white, [TX, rimY / 2, tubZ0 + 0.05]);
+mesh(new THREE.BoxGeometry(0.1, rimY, 0.76), white, [tubX0 + 0.05, rimY / 2, CZ]);
+mesh(new THREE.BoxGeometry(0.1, rimY, 0.76), white, [tubX1 - 0.05, rimY / 2, CZ]);
+const rimLong = new THREE.CylinderGeometry(0.06, 0.06, 1.65, 20), rimShort = new THREE.CylinderGeometry(0.06, 0.06, 0.66, 20);
+mesh(rimLong, white, [TX, rimY, tubZ1 - 0.05], { rot: [0, 0, Math.PI / 2] });
+mesh(rimLong, white, [TX, rimY, tubZ0 + 0.05], { rot: [0, 0, Math.PI / 2] });
+mesh(rimShort, white, [tubX0 + 0.05, rimY, CZ], { rot: [Math.PI / 2, 0, 0] });
+mesh(rimShort, white, [tubX1 - 0.05, rimY, CZ], { rot: [Math.PI / 2, 0, 0] });
+[[tubX0 + .05, tubZ0 + .05], [tubX0 + .05, tubZ1 - .05], [tubX1 - .05, tubZ0 + .05], [tubX1 - .05, tubZ1 - .05]].forEach(([x, z]) => mesh(SPHERE, white, [x, rimY, z], { scale: [.06, .06, .06] }));
+const basinMat = M(0xf6f4f0, { roughness: 0.12, side: THREE.DoubleSide });
+mesh(BOWL, basinMat, [TX, rimY + 0.02, CZ], { scale: [0.78, 0.4, 0.31], density: 1.4 });
+mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.16, 16), chrome, [-1.5, 0.62, CZ]);
+mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.14, 16), chrome, [-1.44, 0.69, CZ], { rot: [0, 0, Math.PI / 2] });
+mesh(new THREE.CylinderGeometry(0.028, 0.028, 0.16, 16), M(0x3b5c6b, { roughness: .3 }), [-1.48, 0.64, -1.2]);
+mesh(new THREE.CylinderGeometry(0.024, 0.024, 0.13, 16), M(0xd8cdb8, { roughness: .3 }), [-1.4, 0.625, -1.21]);
+mesh(new THREE.BoxGeometry(0.7, 0.012, 0.45), M(0x6b777c, { roughness: 1 }), [-0.6, 0.006, -0.22], { cast: false });
+
+/* ---------- body: prone, head toward the tap-free end ---------- */
+mesh(SPHERE, robe, [-0.56, 0.22, CZ], { scale: [0.27, 0.1, 0.16], density: 3, refl: 1.1 });
+mesh(SPHERE, robe, [-0.86, 0.22, CZ], { scale: [0.17, 0.11, 0.17], density: 3, refl: 1.1 });
+mesh(SPHERE, robe, [-0.36, 0.25, CZ], { scale: [0.12, 0.09, 0.2], density: 3, refl: 1.1 });
+const legGeo = new THREE.CylinderGeometry(0.04, 0.062, 0.6, 16);
+mesh(legGeo, skin, [-1.15, 0.31, CZ - 0.07], { rot: [0, 0, 1.25], density: 3, refl: 1.1 });
+mesh(legGeo, skin, [-1.13, 0.3, CZ + 0.075], { rot: [0.05, 0, 1.22], density: 3, refl: 1.1 });
+mesh(new THREE.CylinderGeometry(0.03, 0.036, 0.5, 14), skin, [-0.62, 0.26, CZ + 0.2], { rot: [0, 0, Math.PI / 2], density: 3, refl: 1.1 });
+mesh(new THREE.CylinderGeometry(0.03, 0.036, 0.42, 14), skin, [-0.2, 0.33, CZ - 0.2], { rot: [0.25, 0.35, Math.PI / 2], density: 3, refl: 1.1 });
+mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.1, 14), skin, [-0.29, 0.28, CZ], { rot: [0, 0, Math.PI / 2], density: 3 });
+mesh(SPHERE, hair, [-0.2, 0.3, CZ], { scale: [0.109, 0.096, 0.094], density: 4, refl: 0.9 });
+mesh(SPHERE, hair, [-0.37, 0.3, CZ], { scale: [0.17, 0.03, 0.15], density: 3, refl: 0.9 });
+mesh(new THREE.PlaneGeometry(0.085, 0.085), M(0xffffff, { map: woundTex, transparent: true, roughness: 0.3, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 }), [-0.22, 0.399, CZ], { rot: [-Math.PI / 2, 0, 0], scan: false, cast: false });
+mesh(SPHERE, blood, [-0.06, 0.28, CZ + 0.03], { scale: [0.13, 0.012, 0.09], rot: [0, 0, 0.35], density: 4, refl: 0.45, cast: false });
+mesh(SPHERE, blood, [-0.13, 0.33, CZ + 0.07], { scale: [0.05, 0.02, 0.02], rot: [0, 0.4, 0.6], density: 4, refl: 0.45, cast: false });
+
+/* ---------- glass shards hidden at the tile corner (grout crossing at x 0.8, z -1.1) ---------- */
+const shardPos = [];
+for (let i = 0; i < 7; i++) {
+  const s = 0.006 + R() * 0.009, p = [0.8 + (R() - .5) * 0.07, s * 0.3, -1.1 + (R() - .5) * 0.05];
+  shardPos.push(p);
+  mesh(new THREE.TetrahedronGeometry(s), glassMat, p, { rot: [R() * 3, R() * 3, R() * 3], scale: [1, .4, 1.3], min: 70, refl: 1.9, cast: false });
+}
+const sparkles = shardPos.slice(0, 4).map((p, i) => {
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: sparkTex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }));
+  sp.position.set(p[0], 0.012, p[2]); sp.userData.phase = i * 1.7; mainSet.add(sp); return sp;
+});
+
+/* ---------- vanity ---------- */
+mesh(new THREE.BoxGeometry(0.52, 0.62, 1.3), wood, [1.34, 0.46, 0]);
+mesh(new THREE.BoxGeometry(0.012, 0.012, 0.3), brass, [1.075, 0.62, -0.33]);
+mesh(new THREE.BoxGeometry(0.012, 0.012, 0.3), brass, [1.075, 0.62, 0.33]);
+mesh(new THREE.BoxGeometry(0.56, 0.05, 1.36), marble, [1.33, 0.795, 0]);
+mesh(BOWL, M(0xf7f5f1, { roughness: 0.12, side: THREE.DoubleSide }), [1.3, 0.95, -0.15], { scale: [0.2, 0.13, 0.16] });
+mesh(new THREE.CylinderGeometry(0.016, 0.02, 0.24, 16), chrome, [1.53, 0.94, -0.15]);
+mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.13, 16), chrome, [1.47, 1.05, -0.15], { rot: [0, 0, Math.PI / 2] });
+// brass tray: 4 slots, one empty
+mesh(new THREE.BoxGeometry(0.24, 0.012, 0.3), brass, [1.37, 0.827, 0.38], { density: 3 });
+mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.1, 24), M(0xf2b9c4, { roughness: .05, transparent: true, opacity: .75, envMapIntensity: 2 }), [1.315, 0.883, 0.305], { density: 3 });
+mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.025, 12), brass, [1.315, 0.945, 0.305]);
+mesh(new THREE.BoxGeometry(0.045, 0.12, 0.045), M(0xd9a24a, { roughness: .05, transparent: true, opacity: .78, envMapIntensity: 2 }), [1.425, 0.893, 0.305], { density: 3 });
+mesh(new THREE.BoxGeometry(0.02, 0.025, 0.02), M(0x111111, { roughness: .2 }), [1.425, 0.965, 0.305]);
+mesh(SPHERE, M(0x9fd2d9, { roughness: .05, transparent: true, opacity: .75, envMapIntensity: 2 }), [1.315, 0.868, 0.455], { scale: [.034, .034, .034], density: 3 });
+mesh(new THREE.PlaneGeometry(0.1, 0.1), M(0xffffff, { map: dustTex, transparent: true, roughness: .8, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 }), [1.425, 0.834, 0.455], { rot: [-Math.PI / 2, 0, 0], scan: false, cast: false });
+// open cream jar and its lid
+mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.05, 24), M(0xf7f3ee, { roughness: .2 }), [1.25, 0.845, 0.1]);
+mesh(new THREE.CylinderGeometry(0.031, 0.031, 0.004, 24), M(0xf1e6d4, { roughness: .9 }), [1.25, 0.871, 0.1], { scan: false });
+mesh(new THREE.CylinderGeometry(0.037, 0.037, 0.015, 24), brass, [1.17, 0.828, 0.17]);
+
+/* ---------- right wall: mirror, vanity light, medicine cabinet ---------- */
+const RW = { parent: wRight.group };
+mesh(new THREE.BoxGeometry(0.02, 0.89, 0.84), brass, [1.595, 1.425, -0.15], RW);
+mesh(new THREE.BoxGeometry(0.012, 0.85, 0.8), mirrorMat, [1.585, 1.425, -0.15], Object.assign({ density: 1.5, refl: 1.3 }, RW));
+mesh(new THREE.PlaneGeometry(0.42, 0.36), M(0xffffff, { map: smearTex, transparent: true, roughness: .5, depthWrite: false }), [1.577, 1.2, -0.02], Object.assign({ rot: [0, -Math.PI / 2, 0], scan: false, cast: false }, RW));
+mesh(new THREE.BoxGeometry(0.04, 0.03, 0.7), M(0xfff1dc, { emissive: 0xffd9a8, emissiveIntensity: 1.6 }), [1.56, 1.93, -0.15], Object.assign({ cast: false }, RW));
+const cab = M(0xf1eee8, { roughness: .4 });
+mesh(new THREE.BoxGeometry(0.01, 0.65, 0.4), cab, [1.595, 1.525, 0.6], RW);
+mesh(new THREE.BoxGeometry(0.14, 0.015, 0.4), cab, [1.53, 1.845, 0.6], RW);
+mesh(new THREE.BoxGeometry(0.14, 0.015, 0.4), cab, [1.53, 1.205, 0.6], RW);
+mesh(new THREE.BoxGeometry(0.14, 0.65, 0.015), cab, [1.53, 1.525, 0.4075], RW);
+mesh(new THREE.BoxGeometry(0.14, 0.65, 0.015), cab, [1.53, 1.525, 0.7925], RW);
+mesh(new THREE.BoxGeometry(0.13, 0.01, 0.37), M(0xdfe8ea, { roughness: .1, transparent: true, opacity: .6 }), [1.53, 1.42, 0.6], RW);
+mesh(new THREE.BoxGeometry(0.13, 0.01, 0.37), M(0xdfe8ea, { roughness: .1, transparent: true, opacity: .6 }), [1.53, 1.63, 0.6], RW);
+mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.09, 14), M(0x6e8fa6, { roughness: .3 }), [1.53, 1.47, 0.48], RW);
+mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.07, 14), M(0xffffff, { roughness: .3 }), [1.53, 1.67, 0.7], RW);
+mesh(new THREE.CylinderGeometry(0.025, 0.022, 0.1, 14), M(0x9fb7bf, { roughness: .1, transparent: true, opacity: .7 }), [1.53, 1.475, 0.7], RW);
+// the sedative: open, lying on its side, pills spilled
+const amber = M(0x8a4a12, { roughness: .15, transparent: true, opacity: .9 });
+mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.07, 20), [M(0xffffff, { map: labelTex, roughness: .5 }), amber, amber], [1.52, 1.235, 0.62], Object.assign({ rot: [Math.PI / 2, 0, 0.3], density: 4, refl: 1.4 }, RW));
+mesh(new THREE.CylinderGeometry(0.024, 0.024, 0.016, 20), M(0xf2f2f2, { roughness: .4 }), [1.5, 1.221, 0.5], RW);
+for (let i = 0; i < 7; i++) mesh(SPHERE, M(0xfbfbf7, { roughness: .6 }), [1.48 + R() * 0.07, 1.218, 0.66 + R() * 0.1], Object.assign({ scale: [.008, .0035, .008], min: 20, refl: 1.5, cast: false }, RW));
+const hinge = new THREE.Group(); hinge.position.set(1.46, 1.525, 0.8); hinge.rotation.y = 1.75; wRight.group.add(hinge);
+mesh(new THREE.BoxGeometry(0.015, 0.65, 0.4), cab, [0, 0, -0.2], { parent: hinge });
+mesh(new THREE.BoxGeometry(0.004, 0.6, 0.36), mirrorMat, [-0.009, 0, -0.2], { parent: hinge });
+
+/* ---------- other fixtures ---------- */
+mesh(new THREE.BoxGeometry(0.18, 0.36, 0.4), white, [-1.5, 0.6, 0.6]);
+mesh(SPHERE, white, [-1.27, 0.3, 0.6], { scale: [0.26, 0.12, 0.18] });
+mesh(new THREE.CylinderGeometry(0.12, 0.15, 0.3, 24), white, [-1.3, 0.15, 0.6]);
+const FW = { parent: wFront.group };
+mesh(new THREE.BoxGeometry(0.82, 2.05, 0.04), wood, [0.9, 1.025, 1.28], FW);
+mesh(new THREE.BoxGeometry(0.14, 0.02, 0.03), brass, [0.58, 1.0, 1.25], FW);
+mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.7, 12), chrome, [-0.6, 1.25, 1.24], Object.assign({ rot: [0, 0, Math.PI / 2] }, FW));
+mesh(new THREE.BoxGeometry(0.55, 0.62, 0.03), M(0xc9c1b6, { roughness: 1 }), [-0.6, 0.95, 1.245], FW);
+const LW = { parent: wLeft.group };
+mesh(new THREE.BoxGeometry(0.03, 0.5, 0.7), M(0x1d2a2e, { roughness: .3, metalness: .3 }), [-1.585, 1.55, 0.2], LW);
+
+/* ---------- lights (only the real view uses them) ---------- */
+realGroup.add(new THREE.HemisphereLight(0xfff6ea, 0x2a2622, 0.35));
+const key = new THREE.SpotLight(0xffe6c8, 1.5, 0, 1.15, 0.65, 1);
+key.position.set(0.1, 2.45, -0.2); key.target.position.set(0, 0, -0.35);
+key.castShadow = true; key.shadow.mapSize.set(1024, 1024); key.shadow.bias = -0.0004; key.shadow.camera.near = 0.3;
+realGroup.add(key, key.target);
+const lamp = new THREE.PointLight(0xffd9a8, 0.55, 3.2, 2); lamp.position.set(1.35, 1.95, -0.15); realGroup.add(lamp);
+const torch = new THREE.SpotLight(0xeef6ff, 0.5, 4, 0.55, 0.9, 1.5); realGroup.add(torch, torch.target);
+
+/* ---------- LiDAR point cloud sampled from the same surfaces ---------- */
+const RAMP = [[0, [0.07, 0.17, 0.48]], [0.3, [0.08, 0.6, 0.78]], [0.62, [0.52, 0.94, 0.88]], [1, [0.98, 0.88, 0.7]]];
+function ramp(t) {
+  t = Math.max(0, Math.min(1, t));
+  for (let i = 1; i < RAMP.length; i++) if (t <= RAMP[i][0]) {
+    const [t0, a] = RAMP[i - 1], [t1, b] = RAMP[i], k = (t - t0) / (t1 - t0);
+    return [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k, a[2] + (b[2] - a[2]) * k];
+  }
+  return RAMP[RAMP.length - 1][1];
+}
+const pointMat = new THREE.ShaderMaterial({
+  uniforms: { uTime: { value: 0 }, uReveal: { value: 0 }, uSize: { value: 9 * PR }, uMax: { value: 6 * PR } },
+  vertexShader: `
+    attribute vec3 aColor; uniform float uTime, uReveal, uSize, uMax; varying vec3 vColor; varying float vA;
+    void main(){
+      vec4 mv = modelViewMatrix * vec4(position,1.0);
+      gl_Position = projectionMatrix * mv;
+      float d = length(position - vec3(0.2,1.3,0.0));
+      float rev = 1.0 - smoothstep(uReveal-0.35, uReveal, d);
+      float edge = smoothstep(uReveal-0.35, uReveal-0.05, d) * rev;
+      float sweep = fract(uTime*0.12)*3.2 - 0.3;
+      float band = exp(-pow((position.y - sweep)*18.0, 2.0));
+      vColor = aColor*0.85 + vec3(0.35,0.9,1.0)*(band*0.55 + edge*1.2);
+      vA = rev;
+      gl_PointSize = clamp(uSize / -mv.z, 1.0, uMax);
+    }`,
+  fragmentShader: `
+    varying vec3 vColor; varying float vA;
+    void main(){ vec2 c = gl_PointCoord - 0.5; float r = dot(c,c); if (r > 0.25 || vA < 0.01) discard; gl_FragColor = vec4(vColor, (1.0 - r*3.2) * vA * 0.9); }`,
+  transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
+});
+let totalPts = 0;
+const DENS = 2300;
+function sampleGroup(root) {
+  root.updateMatrixWorld(true);
+  const P = [], C = [];
+  const a = new V3(), b = new V3(), c = new V3(), ab = new V3(), ac = new V3(), p = new V3();
+  root.traverse(o => {
+    if (!o.isMesh || !o.userData.scan) return;
+    const g = o.geometry.index ? o.geometry.toNonIndexed() : o.geometry;
+    const pos = g.attributes.position, n = pos.count / 3;
+    const wp = new Float32Array(pos.count * 3);
+    for (let i = 0; i < pos.count; i++) { p.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld); wp[i * 3] = p.x; wp[i * 3 + 1] = p.y; wp[i * 3 + 2] = p.z; }
+    const cum = new Float32Array(n); let tot = 0;
+    for (let t = 0; t < n; t++) { a.fromArray(wp, t * 9); b.fromArray(wp, t * 9 + 3); c.fromArray(wp, t * 9 + 6); tot += ab.subVectors(b, a).cross(ac.subVectors(c, a)).length() * 0.5; cum[t] = tot; }
+    if (tot <= 0) return;
+    const count = Math.max(o.userData.min, Math.round(tot * DENS * o.userData.density));
+    for (let k = 0; k < count; k++) {
+      const r = R() * tot; let lo = 0, hi = n - 1;
+      while (lo < hi) { const mid = (lo + hi) >> 1; if (cum[mid] < r) lo = mid + 1; else hi = mid; }
+      a.fromArray(wp, lo * 9); b.fromArray(wp, lo * 9 + 3); c.fromArray(wp, lo * 9 + 6);
+      let u = R(), v = R(); if (u + v > 1) { u = 1 - u; v = 1 - v; }
+      p.copy(a).addScaledVector(ab.subVectors(b, a), u).addScaledVector(ac.subVectors(c, a), v);
+      p.x += (R() - .5) * 0.004; p.y += (R() - .5) * 0.004; p.z += (R() - .5) * 0.004;
+      P.push(p.x, p.y, p.z);
+      const col = ramp(p.y / 2.4), k2 = o.userData.refl * (0.72 + R() * 0.38);
+      C.push(col[0] * k2, col[1] * k2, col[2] * k2);
+    }
+  });
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(P, 3));
+  geo.setAttribute('aColor', new THREE.Float32BufferAttribute(C, 3));
+  const pts = new THREE.Points(geo, pointMat); pts.frustumCulled = false;
+  lidarGroup.add(pts); totalPts += P.length / 3;
+  return pts;
+}
+sampleGroup(mainSet);
+walls.forEach(w => { w.points = sampleGroup(w.group); });
+
+/* ---------- hotspots ---------- */
+const HOTSPOTS = [
+  { id: 'wound', n: 1, place: 'ศีรษะผู้ตาย', pos: [-0.22, 0.5, CZ], wall: null,
+    view: { t: [-0.26, 0.35, CZ], theta: 0.3, phi: 0.7, r: 1.0 },
+    title: 'บาดแผลที่ท้ายทอย',
+    lead: 'กะโหลกท้ายทอยแตกยุบ ขอบแผลเป็นเหลี่ยม มุมมน กว้างราว 3.5 × 3 ซม.',
+    facts: [
+      'แผลเป็นสี่เหลี่ยมขอบมน แปลว่าวัตถุที่กระแทกมีด้านแบนและมีมุม',
+      'ขอบอ่างอาบน้ำเป็นทรงโค้งกลม ถ้าศีรษะฟาดขอบอ่าง แผลควรเป็นรอยยาวโค้งตามขอบ',
+      'ผู้ตายนอนคว่ำหน้า ทั้งที่แผลอยู่ท้ายทอย คนที่ลื่นหงายหลังควรล้มนอนหงาย'
+    ],
+    note: 'แผลรูปทรงนี้ไม่ได้เกิดจากขอบอ่าง',
+    short: 'แผลเหลี่ยมขอบมน ไม่ตรงกับขอบอ่างที่โค้ง' },
+  { id: 'floor', n: 2, place: 'พื้นข้างอ่างอาบน้ำ', pos: [0.8, 0.08, -1.1], wall: null,
+    view: { t: [0.78, 0.02, -1.08], theta: 0.5, phi: 0.8, r: 0.6 },
+    title: 'พื้นห้องน้ำข้างอ่าง',
+    lead: 'พื้นกระเบื้องแห้งสนิท ไม่มีคราบสบู่และไม่มีน้ำหยด',
+    facts: [
+      'อ่างไม่มีน้ำ พื้นก็แห้ง ในห้องไม่มีอะไรที่ทำให้ลื่น',
+      'พบเศษแก้วคริสตัลชิ้นเล็ก 7 ชิ้นติดอยู่ในร่องยาแนวตรงมุมกระเบื้อง',
+      'เป็นคริสตัลตะกั่ว ชนิดเดียวกับของประดับบนเคาน์เตอร์ ไม่ใช่แก้วน้ำทั่วไป'
+    ],
+    note: 'มีคนกวาดเก็บแล้ว แต่เก็บไม่หมด',
+    short: 'พื้นแห้ง มีเศษคริสตัลซ่อนที่มุมกระเบื้อง' },
+  { id: 'tray', n: 3, place: 'เคาน์เตอร์อ่างล้างหน้า', pos: [1.37, 0.98, 0.38], wall: null,
+    view: { t: [1.37, 0.86, 0.4], theta: -1.3, phi: 0.8, r: 0.55 },
+    title: 'ถาดบนเคาน์เตอร์อ่างล้างหน้า',
+    lead: 'ถาดทองเหลืองมีช่องวาง 4 ช่อง มีขวดน้ำหอมอยู่ 3 ช่อง อีกช่องว่างเปล่า',
+    facts: [
+      'ช่องที่ว่างมีรอยฝุ่นเป็นกรอบสี่เหลี่ยมมุมมน ขนาดราว 6 × 6 ซม.',
+      'ของที่เคยวางตรงนี้ทรงเหลี่ยม หนัก และฐานไม่มีฝุ่น เพิ่งถูกหยิบไปไม่นาน',
+      'ค้นทั่วห้องน้ำแล้วไม่พบของชิ้นนี้'
+    ],
+    note: 'ที่ทับกระดาษคริสตัลทรงเหลี่ยมหายไป ขนาดใกล้เคียงแผลที่ท้ายทอย',
+    short: 'ที่ทับกระดาษคริสตัลทรงเหลี่ยมหายไป 1 ชิ้น' },
+  { id: 'mirror', n: 4, place: 'กระจกห้องน้ำ', pos: [1.55, 1.3, -0.05], wall: wRight,
+    view: { t: [1.55, 1.3, -0.08], theta: -Math.PI / 2, phi: 1.45, r: 0.9 },
+    title: 'กระจกเหนืออ่างล้างหน้า',
+    lead: 'รอยนิ้วมือปาดเป็นทางยาว เปื้อนครีมบำรุงผิว',
+    facts: [
+      'รอยสี่นิ้วไถลเฉียงลงจากบนลงล่าง เหมือนมือที่ยันกระจกแล้วถูกดึงออก',
+      'กระปุกครีมบนเคาน์เตอร์เปิดฝาค้างไว้ ผู้ตายน่าจะกำลังทาครีมอยู่หน้ากระจก',
+      'มีรอยฝ่ามืออีกขนาดหนึ่งซ้อนอยู่ข้างกัน แสดงว่ามีคนสองคนยื้อกันตรงนี้'
+    ],
+    note: 'จุดเกิดเหตุจริงน่าจะอยู่หน้ากระจก ไม่ใช่ในอ่าง',
+    short: 'รอยนิ้วเปื้อนครีมปาดกระจก มีการยื้อแย่ง' },
+  { id: 'cabinet', n: 5, place: 'ตู้ยา', pos: [1.45, 1.45, 0.6], wall: wRight,
+    view: { t: [1.52, 1.38, 0.6], theta: -1.5, phi: 1.3, r: 0.75 },
+    title: 'ตู้ยา',
+    lead: 'ขวดยาระงับประสาท Diazepam ถูกเปิดฝาทิ้งไว้ เม็ดยาหกกระจายบนชั้น',
+    facts: [
+      'ผลชันสูตรเบื้องต้น: ในกระเพาะไม่มีกลิ่นยาและไม่พบเม็ดยาตกค้าง',
+      'ไม่มีหลักฐานว่าผู้ตายกินยาก่อนเสียชีวิต',
+      'ขวดยาวางให้เห็นชัด เหมือนจงใจให้คิดว่าผู้ตายมึนยาแล้วลื่นล้ม'
+    ],
+    note: 'ยาเป็นแค่ฉากประกอบ',
+    short: 'ขวดยาเปิดทิ้ง แต่กระเพาะไม่มีกลิ่นยา' }
+];
+
+function markerTexture(n, done) {
+  return tex(128, 128, g => {
+    g.translate(64, 64);
+    const col = done ? '#7fe0a7' : '#ffb547';
+    g.strokeStyle = col; g.globalAlpha = .35; g.lineWidth = 3; g.beginPath(); g.arc(0, 0, 58, 0, 7); g.stroke();
+    g.globalAlpha = 1; g.lineWidth = 7; g.beginPath(); g.arc(0, 0, 44, 0, 7); g.stroke();
+    g.fillStyle = done ? 'rgba(127,224,167,.22)' : 'rgba(255,181,71,.2)'; g.fill();
+    g.fillStyle = col; g.font = '700 50px "Chakra Petch", system-ui, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText(done ? '✓' : String(n), 0, 3);
+  });
+}
+HOTSPOTS.forEach(h => {
+  h.sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: markerTexture(h.n, false), depthTest: false, transparent: true, toneMapped: false }));
+  h.sprite.position.set(h.pos[0], h.pos[1], h.pos[2]); h.sprite.renderOrder = 10; markerGroup.add(h.sprite);
+});
+function refreshMarkers() {
+  HOTSPOTS.forEach(h => { const old = h.sprite.material.map; h.sprite.material.map = markerTexture(h.n, collected.has(h.id)); h.sprite.material.needsUpdate = true; old.dispose(); });
+}
+
+/* ---------- camera controller ---------- */
+const OVERVIEW = { t: [0.05, 0.55, -0.15], theta: -0.62, phi: 0.95, r: 5.0 };
+const ctl = { target: new V3(), theta: 0, phi: 1, r: 5, lim: null };
+function setView(v) { ctl.target.set(v.t[0], v.t[1], v.t[2]); ctl.theta = v.theta; ctl.phi = v.phi; ctl.r = v.r; }
+setView(OVERVIEW);
+const GLOBAL_LIM = { th: [-Infinity, Infinity], ph: [0.12, 1.5], r: [0.8, 8], pan: true };
+ctl.lim = GLOBAL_LIM;
+function setLimits(v) {
+  ctl.lim = v ? { th: [v.theta - 0.75, v.theta + 0.75], ph: [Math.max(0.15, v.phi - 0.45), Math.min(1.55, v.phi + 0.35)], r: [v.r * 0.55, v.r * 1.5], pan: false } : GLOBAL_LIM;
+}
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+function applyCam() {
+  const sp = Math.sin(ctl.phi);
+  camera.position.set(ctl.target.x + ctl.r * sp * Math.sin(ctl.theta), ctl.target.y + ctl.r * Math.cos(ctl.phi), ctl.target.z + ctl.r * sp * Math.cos(ctl.theta));
+  camera.lookAt(ctl.target);
+}
+function rotate(dx, dy) {
+  ctl.theta = clamp(ctl.theta - dx * 0.007, ctl.lim.th[0], ctl.lim.th[1]);
+  ctl.phi = clamp(ctl.phi - dy * 0.006, ctl.lim.ph[0], ctl.lim.ph[1]);
+}
+function zoom(f) { ctl.r = clamp(ctl.r * f, ctl.lim.r[0], ctl.lim.r[1]); }
+function pan(dx, dy) {
+  if (!ctl.lim.pan) return;
+  const s = ctl.r * 0.0016, st = Math.sin(ctl.theta), ct = Math.cos(ctl.theta);
+  ctl.target.x += (-ct * dx - st * dy) * s;
+  ctl.target.z += (st * dx - ct * dy) * s;
+  ctl.target.x = clamp(ctl.target.x, -W / 2, W / 2); ctl.target.z = clamp(ctl.target.z, -D / 2, D / 2);
+}
+
+let tween = null;
+const ease = k => k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+function flyTo(v, dur, cb) {
+  let dTh = v.theta - ctl.theta;
+  dTh = ((dTh + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI;
+  tween = { s: { t: ctl.target.clone(), theta: ctl.theta, phi: ctl.phi, r: ctl.r }, e: { t: new V3(v.t[0], v.t[1], v.t[2]), phi: v.phi, r: v.r }, dTh, t0: performance.now(), dur: reduceMotion ? 1 : dur, cb };
+}
+function stepTween(now) {
+  if (!tween) return;
+  const k = Math.min(1, (now - tween.t0) / tween.dur), e = ease(k), s = tween.s;
+  ctl.target.lerpVectors(s.t, tween.e.t, e);
+  ctl.theta = s.theta + tween.dTh * e;
+  ctl.phi = s.phi + (tween.e.phi - s.phi) * e;
+  ctl.r = s.r + (tween.e.r - s.r) * e;
+  if (k >= 1) { const cb = tween.cb; tween = null; cb && cb(); }
+}
+
+/* ---------- input ---------- */
+const pointers = new Map();
+let tapStart = null, pinchPrev = null, lastTap = null, busy = false, started = false;
+canvas.addEventListener('pointerdown', e => {
+  canvas.setPointerCapture(e.pointerId);
+  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (pointers.size === 1) tapStart = { x: e.clientX, y: e.clientY, t: performance.now(), moved: 0, multi: false, right: e.button === 2 };
+  else if (tapStart) tapStart.multi = true;
+  pinchPrev = null;
+});
+canvas.addEventListener('pointermove', e => {
+  const p = pointers.get(e.pointerId); if (!p) return;
+  const dx = e.clientX - p.x, dy = e.clientY - p.y; p.x = e.clientX; p.y = e.clientY;
+  if (tapStart) tapStart.moved += Math.abs(dx) + Math.abs(dy);
+  if (busy || tween || !started) return;
+  if (pointers.size === 1) {
+    if (e.pointerType === 'mouse' && (tapStart && tapStart.right || e.shiftKey)) pan(dx, dy); else rotate(dx, dy);
+  } else if (pointers.size === 2) {
+    const [a, b] = [...pointers.values()];
+    const d = Math.hypot(a.x - b.x, a.y - b.y), mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+    if (pinchPrev && d > 0) { zoom(pinchPrev.d / d); pan(mx - pinchPrev.mx, my - pinchPrev.my); }
+    pinchPrev = { d, mx, my };
+  }
+});
+function endPointer(e) {
+  if (!pointers.has(e.pointerId)) return;
+  pointers.delete(e.pointerId); pinchPrev = null;
+  if (pointers.size === 0 && tapStart) {
+    const t = tapStart; tapStart = null;
+    if (!t.multi && !t.right && t.moved < 12 && performance.now() - t.t < 350) handleTap(e.clientX, e.clientY);
+  }
+}
+canvas.addEventListener('pointerup', endPointer);
+canvas.addEventListener('pointercancel', endPointer);
+canvas.addEventListener('contextmenu', e => e.preventDefault());
+canvas.addEventListener('wheel', e => { e.preventDefault(); if (!busy && !tween && started) zoom(Math.exp(e.deltaY * 0.0012)); }, { passive: false });
+window.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    if (!$('#solve').hidden) closeSolve(); else if (!$('#book').hidden) toggleBook(false); else if (mode === 'real') backToScan();
+  }
+});
+
+const proj = new V3();
+function pickHotspot(x, y) {
+  let best = null, bd = 48;
+  HOTSPOTS.forEach(h => {
+    if (!h.sprite.visible) return;
+    proj.copy(h.sprite.position).project(camera);
+    if (proj.z > 1) return;
+    const sx = (proj.x + 1) / 2 * innerWidth, sy = (1 - proj.y) / 2 * innerHeight;
+    const d = Math.hypot(sx - x, sy - y);
+    if (d < bd) { bd = d; best = h; }
+  });
+  return best;
+}
+function handleTap(x, y) {
+  if (busy || !started || mode !== 'lidar') return;
+  const now = performance.now(), hit = pickHotspot(x, y);
+  if (lastTap && now - lastTap.t < 420 && Math.hypot(x - lastTap.x, y - lastTap.y) < 44) {
+    lastTap = null;
+    if (hit) inspect(hit); else toast('ตรงนี้ไม่มีจุดตรวจ ลองแตะสองครั้งที่วงสีส้ม');
+    return;
+  }
+  lastTap = { t: now, x, y };
+  if (hit) toast(`แตะอีกครั้งเพื่อซูมตรวจจุดที่ ${hit.n}: ${hit.place}`);
+}
+
+/* ---------- game state & UI ---------- */
+let mode = 'lidar', current = null;
+const collected = new Set();
+let toastTimer = 0;
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 2200); }
+function flash(mid) {
+  const f = $('#flash'); f.classList.add('on');
+  setTimeout(() => { mid(); requestAnimationFrame(() => requestAnimationFrame(() => f.classList.remove('on'))); }, reduceMotion ? 30 : 360);
+}
+function setMode(m) {
+  mode = m; document.body.dataset.mode = m;
+  realGroup.visible = m === 'real'; lidarGroup.visible = m === 'lidar'; markerGroup.visible = m === 'lidar';
+  scene.background = m === 'real' ? BG_REAL : BG_LIDAR;
+}
+function inspect(h) {
+  if (busy) return;
+  busy = true; toggleBook(false); $('#toast').classList.remove('on');
+  flyTo(h.view, 1100, () => flash(() => {
+    setMode('real'); current = h; setLimits(h.view); showSheet(h); collect(h); busy = false;
+  }));
+}
+function backToScan() {
+  if (busy || mode !== 'real') return;
+  busy = true;
+  flash(() => {
+    $('#sheet').hidden = true; setMode('lidar'); setLimits(null); updateViewOffset();
+    const v = current.view; current = null; busy = false;
+    flyTo({ t: v.t, theta: v.theta, phi: Math.min(v.phi, 1.1), r: 2.4 }, 800);
+  });
+}
+function showSheet(h) {
+  $('#sheetTag').textContent = `หลักฐาน ${h.n}`;
+  $('#sheetMeta').textContent = h.place;
+  $('#sheetTitle').textContent = h.title;
+  $('#sheetLead').textContent = h.lead;
+  const ul = $('#sheetFacts'); ul.innerHTML = '';
+  h.facts.forEach(f => { const li = document.createElement('li'); li.textContent = f; ul.appendChild(li); });
+  $('#sheetNote').textContent = h.note;
+  const s = $('#sheet'); s.hidden = false; s.scrollTop = 0;
+  updateViewOffset();
+  $('#backBtn').focus({ preventScroll: true });
+}
+function collect(h) {
+  if (collected.has(h.id)) return;
+  collected.add(h.id); refreshMarkers(); updateUI();
+  if (collected.size === HOTSPOTS.length) setTimeout(() => toast('หลักฐานครบ 5 จุดแล้ว กลับไปกด “สรุปคดี” ได้เลย'), 600);
+}
+function updateUI() {
+  const n = collected.size, total = HOTSPOTS.length;
+  $('#count').textContent = `${n}/${total}`;
+  const solveBtn = $('#solveBtn'); solveBtn.disabled = n < total;
+  solveBtn.textContent = n < total ? `สรุปคดี (${n}/${total})` : 'สรุปคดี';
+  const bodyDone = collected.has('wound'), all = n === total;
+  const st = [bodyDone ? 'done' : 'on', all ? 'done' : (bodyDone ? 'on' : ''), all ? 'on' : ''];
+  document.querySelectorAll('.steps li').forEach((li, i) => { li.className = st[i]; });
+  $('#hint').textContent = !bodyDone
+    ? 'เริ่มจากตรวจศพ: แตะสองครั้งที่วงสีส้ม ① เหนือศีรษะผู้ตายในอ่างอาบน้ำ'
+    : !all ? `เก็บวัตถุพยานที่เหลือ อีก ${total - n} จุด ลากหมุนห้องเพื่อหาวงสีส้ม`
+    : 'หลักฐานครบแล้ว กด “สรุปคดี” เพื่อส่งรายงาน';
+  const list = $('#bookList'); list.innerHTML = '';
+  HOTSPOTS.forEach(h => {
+    const got = collected.has(h.id), li = document.createElement('li');
+    li.className = got ? 'got' : '';
+    li.innerHTML = `<button type="button"><span class="n">${got ? '✓' : h.n}</span><span class="t"></span><span class="s"></span></button>`;
+    li.querySelector('.t').textContent = got ? h.title : h.place;
+    li.querySelector('.s').textContent = got ? h.short : 'ยังไม่ได้ตรวจ แตะเพื่อพาไปยังจุดนี้';
+    li.querySelector('button').addEventListener('click', () => {
+      toggleBook(false);
+      if (got) inspect(h);
+      else flyTo({ t: h.view.t, theta: h.view.theta, phi: Math.min(h.view.phi, 1.1), r: 2.2 }, 900, () => toast(`แตะสองครั้งที่วง ${h.n} เพื่อตรวจ`));
+    });
+    list.appendChild(li);
+  });
+}
+function toggleBook(open) {
+  const b = $('#book'); b.hidden = !open; $('#bookBtn').setAttribute('aria-expanded', String(open));
+}
+function updateViewOffset() {
+  const w = innerWidth, h = innerHeight, s = $('#sheet');
+  if (mode === 'real' && !s.hidden) {
+    const r = s.getBoundingClientRect();
+    if (r.width < w * 0.7) camera.setViewOffset(w, h, r.width / 2, 0, w, h);
+    else camera.setViewOffset(w, h, 0, Math.min(r.height, h * 0.6) / 2, w, h);
+  } else camera.clearViewOffset();
+  camera.updateProjectionMatrix();
+}
+
+/* ---------- deduction ---------- */
+const QUESTIONS = [
+  { id: 'q1', q: 'ผู้ตายเสียชีวิตจากอะไร', ans: 'c', ev: [1, 2],
+    opts: [['a', 'ลื่นล้มเอง ศีรษะฟาดขอบอ่างอาบน้ำ'], ['b', 'กินยาระงับประสาทเกินขนาด'], ['c', 'ถูกฆาตกรรม แล้วจัดฉากให้ดูเหมือนอุบัติเหตุ']],
+    why: 'แผลเหลี่ยมไม่ตรงกับขอบอ่างที่โค้งมน พื้นแห้งไม่มีอะไรให้ลื่น และร่างนอนคว่ำทั้งที่แผลอยู่ท้ายทอย' },
+  { id: 'q2', q: 'อาวุธที่ใช้คืออะไร', ans: 'b', ev: [1, 2, 3],
+    opts: [['a', 'ขอบอ่างอาบน้ำ'], ['b', 'ที่ทับกระดาษคริสตัลทรงเหลี่ยมจากถาดบนเคาน์เตอร์'], ['c', 'ขวดยาในตู้ยา']],
+    why: 'ช่องว่างบนถาดมีรอยฝุ่นทรงเหลี่ยมขนาดใกล้เคียงแผล และเศษบนพื้นเป็นคริสตัลชนิดเดียวกับของบนถาด' },
+  { id: 'q3', q: 'ผู้ตายถูกทำร้ายที่จุดไหน', ans: 'b', ev: [3, 4],
+    opts: [['a', 'ในอ่างอาบน้ำ'], ['b', 'หน้ากระจก ตรงอ่างล้างหน้า'], ['c', 'หน้าประตูห้องน้ำ']],
+    why: 'รอยนิ้วเปื้อนครีมบนกระจกบอกว่ามีการยื้อแย่งหน้ากระจก กระปุกครีมยังเปิดค้าง ส่วนในอ่างไม่มีร่องรอยการต่อสู้' },
+  { id: 'q4', q: 'ขวดยาที่เปิดทิ้งไว้บอกอะไร', ans: 'b', ev: [5],
+    opts: [['a', 'ผู้ตายกินยาจนมึน แล้วล้มเอง'], ['b', 'คนร้ายเปิดทิ้งไว้ให้คนเข้าใจว่าเป็นอุบัติเหตุ'], ['c', 'ไม่เกี่ยวข้องกับคดี']],
+    why: 'กระเพาะไม่มีกลิ่นยาและไม่มีเม็ดยาตกค้าง ขวดยาที่วางให้เห็นชัดจึงเป็นฉากประกอบ' }
+];
+function buildForm() {
+  const f = $('#solveForm'); f.innerHTML = '';
+  const p = document.createElement('p'); p.className = 'dim'; p.textContent = 'ตอบให้ครบ 4 ข้อ แล้วส่งรายงานคดี'; f.appendChild(p);
+  QUESTIONS.forEach((q, i) => {
+    const fs = document.createElement('fieldset');
+    const lg = document.createElement('legend'); lg.textContent = `${i + 1}. ${q.q}`; fs.appendChild(lg);
+    q.opts.forEach(([k, label]) => {
+      const lab = document.createElement('label'); lab.className = 'opt';
+      lab.innerHTML = `<input type="radio" name="${q.id}" id="${q.id}-${k}" value="${k}"><span></span>`;
+      lab.querySelector('span').textContent = label;
+      fs.appendChild(lab);
+    });
+    f.appendChild(fs);
+  });
+  const row = document.createElement('div'); row.className = 'row';
+  row.innerHTML = '<button type="submit" class="btn primary" id="submitBtn" disabled>ส่งรายงานคดี</button><button type="button" class="btn ghost" id="cancelSolve">กลับไปตรวจต่อ</button>';
+  f.appendChild(row);
+  f.addEventListener('change', () => { $('#submitBtn').disabled = QUESTIONS.some(q => !f.elements[q.id].value); });
+  $('#cancelSolve').addEventListener('click', closeSolve);
+}
+function openSolve() {
+  if (collected.size < HOTSPOTS.length) return;
+  toggleBook(false);
+  buildForm(); $('#solveForm').hidden = false; $('#result').hidden = true; $('#solve').hidden = false;
+  document.querySelectorAll('.steps li')[2].className = 'on';
+  const first = $('#solveForm input'); first && first.focus({ preventScroll: true });
+}
+function closeSolve() { $('#solve').hidden = true; updateUI(); }
+$('#solveForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const f = e.target; let score = 0;
+  const res = $('#result'); res.innerHTML = '';
+  const rows = QUESTIONS.map((q, i) => {
+    const pick = f.elements[q.id].value, ok = pick === q.ans; if (ok) score++;
+    const right = q.opts.find(o => o[0] === q.ans)[1];
+    return { q, i, ok, right };
+  });
+  const rank = score === 4 ? 'ปิดคดีได้สมบูรณ์ รายงานของคุณถูกส่งต่ออัยการ' : score === 3 ? 'เกือบสมบูรณ์ มีจุดหนึ่งที่อ่านหลักฐานพลาด' : 'หลักฐานยังเชื่อมโยงไม่พอ ลองกลับไปดูอีกรอบ';
+  res.insertAdjacentHTML('beforeend', `<div class="score">${score}<small> / 4</small></div><p></p>`);
+  res.querySelector('p').textContent = rank;
+  rows.forEach(({ q, i, ok, right }) => {
+    const d = document.createElement('div'); d.className = 'ans ' + (ok ? 'good' : 'bad');
+    d.innerHTML = '<span class="mark"></span><strong></strong><span class="why"></span>';
+    d.querySelector('.mark').textContent = (ok ? '✓ ถูกต้อง' : '✗ ไม่ถูก') + ` · ข้อ ${i + 1} · หลักฐาน ${q.ev.join(', ')}`;
+    d.querySelector('strong').textContent = right;
+    d.querySelector('.why').textContent = q.why;
+    res.appendChild(d);
+  });
+  res.insertAdjacentHTML('beforeend', `<h3 style="margin:6px 0 0;font:600 17px var(--f-display)">ลำดับเหตุการณ์ที่เกิดขึ้นจริง</h3>
+    <ol class="timeline">
+      <li>ผู้ตายยืนทาครีมอยู่หน้ากระจก กระปุกครีมยังเปิดฝาค้าง</li>
+      <li>คนร้ายเข้ามาด้านหลัง เกิดการยื้อแย่ง มือที่เปื้อนครีมปาดลงบนกระจก</li>
+      <li>คนร้ายคว้าที่ทับกระดาษคริสตัลทรงเหลี่ยมจากถาด ทุบท้ายทอยจนกะโหลกยุบเป็นรูปเหลี่ยม</li>
+      <li>คริสตัลบิ่น เศษกระเด็นลงพื้น คนร้ายกวาดเก็บแต่หลงเหลืออยู่ที่มุมกระเบื้อง</li>
+      <li>อุ้มร่างไปวางคว่ำในอ่างที่แห้ง เปิดขวดยาในตู้ทิ้งไว้ แล้วนำอาวุธออกไปจากห้อง</li>
+    </ol>
+    <div class="row"><button type="button" class="btn primary" id="againBtn">เล่นอีกครั้ง</button><button type="button" class="btn ghost" id="lookBtn">กลับไปดูที่เกิดเหตุ</button></div>`);
+  f.hidden = true; res.hidden = false; res.parentElement.scrollTop = 0;
+  document.querySelectorAll('.steps li').forEach(li => { li.className = 'done'; });
+  $('#againBtn').addEventListener('click', resetGame);
+  $('#lookBtn').addEventListener('click', () => { $('#solve').hidden = true; });
+});
+function resetGame() {
+  collected.clear(); refreshMarkers(); updateUI();
+  $('#solve').hidden = true; $('#sheet').hidden = true;
+  setMode('lidar'); setLimits(null); updateViewOffset(); current = null;
+  pointMat.uniforms.uReveal.value = 0; revealStart = performance.now();
+  flyTo(OVERVIEW, 1200);
+}
+
+/* ---------- buttons ---------- */
+$('#startBtn').addEventListener('click', () => { $('#intro').hidden = true; startGame(); });
+$('#backBtn').addEventListener('click', backToScan);
+$('#bookBtn').addEventListener('click', () => toggleBook($('#book').hidden));
+$('#bookClose').addEventListener('click', () => toggleBook(false));
+$('#solveBtn').addEventListener('click', openSolve);
+$('#resetView').addEventListener('click', () => { if (!busy && mode === 'lidar') flyTo(OVERVIEW, 900); });
+function startGame(instant) {
+  started = true; $('#intro').hidden = true;
+  if (instant) setView(OVERVIEW); else flyTo(OVERVIEW, 1400);
+  canvas.focus({ preventScroll: true });
+}
+
+/* ---------- loop ---------- */
+function resize() {
+  renderer.setSize(innerWidth, innerHeight, false);
+  camera.aspect = innerWidth / innerHeight;
+  OVERVIEW.r = camera.aspect < 0.75 ? 7 : 5;
+  updateViewOffset();
+}
+window.addEventListener('resize', resize);
+let revealStart = performance.now(), hudT = 0;
+const tmp = new V3();
+function frame(now) {
+  requestAnimationFrame(frame);
+  stepTween(now);
+  if (!started && !tween) ctl.theta += 0.0016;
+  applyCam();
+  walls.forEach(w => {
+    w.vis = tmp.subVectors(camera.position, w.center).dot(w.normal) > 0;
+    w.group.visible = w.vis; w.points.visible = w.vis;
+  });
+  const t = now / 1000;
+  pointMat.uniforms.uTime.value = t;
+  pointMat.uniforms.uReveal.value = reduceMotion ? 9 : Math.min(9, (now - revealStart) / 1000 * 2.4);
+  HOTSPOTS.forEach((h, i) => {
+    h.sprite.visible = !h.wall || h.wall.vis;
+    const s = (collected.has(h.id) ? 0.13 : 0.15 + Math.sin(t * 3 + i) * 0.02) * Math.max(1, ctl.r / 3.5);
+    h.sprite.scale.set(s, s, 1);
+  });
+  sparkles.forEach(sp => { const k = Math.max(0, Math.sin(t * 2.2 + sp.userData.phase)); sp.scale.setScalar(0.012 + k * 0.03); sp.material.opacity = k; });
+  if (mode === 'real') { torch.position.copy(camera.position); torch.target.position.copy(ctl.target); }
+  if (now - hudT > 150) {
+    hudT = now;
+    $('#hudMode').textContent = mode === 'real' ? 'RECON · ภาพจำลองความละเอียดสูง' : 'LIDAR · SCAN 01 · 4 mm';
+    $('#hudPts').textContent = `${totalPts.toLocaleString('en-US')} PTS`;
+    $('#hudRange').textContent = `RANGE ${ctl.r.toFixed(2)} m`;
+    $('#hudHead').textContent = `HDG ${String(Math.round(((ctl.theta * 180 / Math.PI) % 360 + 360) % 360)).padStart(3, '0')}°`;
+  }
+  renderer.render(scene, camera);
+}
+
+/* ---------- boot ---------- */
+setMode('lidar');
+resize();
+setView(OVERVIEW);
+updateUI();
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(refreshMarkers);
+function boot(data) {
+  data = data || {};
+  (data.collected || []).forEach(id => collected.add(id));
+  if (collected.size) { refreshMarkers(); updateUI(); }
+  if (data.started) startGame(true);
+  requestAnimationFrame(frame);
+}
+const hot = window.claude && window.claude.hot;
+if (hot && hot.snapshot) hot.snapshot(() => ({ collected: [...collected], started }));
+if (hot && hot.ready) hot.ready(boot); else boot(hot && hot.data);
+})();
+</script>
