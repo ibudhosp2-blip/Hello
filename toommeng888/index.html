@@ -98,12 +98,12 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 .red{background:var(--red)} .black{background:var(--black)} .green{background:var(--green)}
 
 /* board — classic horizontal table */
-.board{flex:none;height:clamp(140px,25dvh,210px);display:grid;
+.board{flex:none;height:clamp(150px,29dvh,270px);display:grid;
   grid-template-columns:1.25fr repeat(12,1fr) 1.25fr;grid-template-rows:repeat(3,1.2fr) 1fr 1fr;gap:2px;
   padding:4px;border-radius:14px;background:linear-gradient(180deg,#0f6b47,#0b4f36);
   border:3px solid var(--gold);box-shadow:0 5px 0 var(--gold-deep)}
 .cell{position:relative;min-width:0;border-radius:5px;display:grid;place-items:center;font-weight:600;
-  font-size:clamp(10px,3.1vw,14px);line-height:1;border:1px solid rgba(255,255,255,.14)}
+  font-size:clamp(10px,3.4vw,15px);line-height:1;border:1px solid rgba(255,255,255,.14)}
 .cell.out{background:rgba(0,0,0,.18);font-size:clamp(10px,2.9vw,13px)}
 .cell.aim{outline:2px solid #fff;outline-offset:-1px;box-shadow:0 0 12px var(--lime);z-index:1}
 .cell.win{animation:win .5s ease-in-out 5 alternate;z-index:1}
@@ -122,12 +122,12 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 
 /* chips + actions */
 .chips{flex:none;display:flex;gap:8px;justify-content:space-between;padding-top:4px}
-.chip{flex:1;max-width:54px;aspect-ratio:1;border-radius:50%;display:grid;place-items:center;touch-action:none;
+.chip{flex:1;max-width:clamp(54px,14vw,62px);aspect-ratio:1;border-radius:50%;display:grid;place-items:center;touch-action:none;
   font:14px var(--f-display);color:#1a1336;background:var(--cc);
   border:4px dashed rgba(255,255,255,.85);box-shadow:0 4px 0 rgba(0,0,0,.45);transition:transform .12s}
 .chip.on{transform:translateY(-4px) scale(1.06);box-shadow:0 0 0 3px #fff,0 7px 0 rgba(0,0,0,.45)}
 .acts{flex:none;display:flex;gap:8px;align-items:stretch}
-.btn{border-radius:14px;padding:9px 12px;font-weight:600;background:var(--panel-2);
+.btn{border-radius:14px;padding:clamp(9px,1.6dvh,14px) 12px;font-weight:600;background:var(--panel-2);
   box-shadow:0 4px 0 #120a2b;border:2px solid var(--line)}
 .btn:active{transform:translateY(3px);box-shadow:0 1px 0 #120a2b}
 .btn:disabled{opacity:.45}
@@ -218,26 +218,26 @@ dialog::backdrop{background:rgba(8,4,20,.7)}
 <div class="toast" id="toast"></div>
 
 <dialog id="dlgPlayer">
-  <form class="sheet" method="dialog">
+  <form class="sheet" id="formPlayer" onsubmit="return false">
     <h3 id="dlgTitle">เพิ่มเพื่อน</h3>
     <input id="inName" maxlength="14" placeholder="ชื่อเล่น" autocomplete="off">
     <div class="row" id="manageRow">
-      <button class="btn" value="refill" type="submit">เติมชิป +1,000</button>
-      <button class="btn danger" value="remove" type="submit">ลบผู้เล่น</button>
+      <button class="btn" data-act="refill" type="button">เติมชิป +1,000</button>
+      <button class="btn danger" data-act="remove" type="button">ลบผู้เล่น</button>
     </div>
     <div class="row" style="margin-top:8px">
-      <button class="btn" value="cancel" type="submit">ยกเลิก</button>
-      <button class="btn pink" value="ok" type="submit">ตกลง</button>
+      <button class="btn" data-act="cancel" type="button">ยกเลิก</button>
+      <button class="btn pink" data-act="ok" type="button">ตกลง</button>
     </div>
     <p class="fine">ใช้ชิปปลอมสำหรับเล่นกับเพื่อนเท่านั้น ไม่มีเงินจริง ไม่มีการแลกเปลี่ยนใดๆ</p>
   </form>
 </dialog>
 
 <dialog id="dlgResult">
-  <form class="sheet" method="dialog">
+  <form class="sheet" onsubmit="return false">
     <div class="resBig"><div class="h" id="resNum"></div><div><h3 id="resTitle" style="margin:0"></h3><div id="resSub" style="color:var(--muted)"></div></div></div>
     <ul class="resList" id="resList"></ul>
-    <div class="row"><button class="btn pink" value="ok" type="submit" style="flex:1">เล่นต่อ</button></div>
+    <div class="row"><button class="btn pink" id="btnContinue" type="button" style="flex:1">เล่นต่อ</button></div>
   </form>
 </dialog>
 
@@ -529,7 +529,9 @@ $('#dlgPlayer').addEventListener('close',()=>{
   $('#dlgPlayer').returnValue='';
   save();render();
 });
+document.querySelectorAll('#dlgPlayer [data-act]').forEach(b=>b.addEventListener('click',()=>$('#dlgPlayer').close(b.dataset.act)));
 $('#dlgPlayer').addEventListener('click',e=>{if(e.target.id==='dlgPlayer')e.target.close('cancel')});
+$('#btnContinue').addEventListener('click',()=>$('#dlgResult').close());
 $('#dlgResult').addEventListener('click',e=>{if(e.target.id==='dlgResult')e.target.close()});
 
 buildBoard();drawWheel();render();
