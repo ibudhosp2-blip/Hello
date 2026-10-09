@@ -1,0 +1,10 @@
+services:
+  uptime:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./monitors.json:/config/monitors.json:ro
+      - ./data:/data

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Uptime Watch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="wrap">
+  <header class="head">
+    <div>
+      <p class="eyebrow">Uptime Watch</p>
+      <h1 id="overall">กำลังโหลดสถานะ…</h1>
+    </div>
+    <p class="meta mono" id="updated" aria-live="polite"></p>
+  </header>
+
+  <section aria-label="สรุปสถานะ" class="counts" id="counts"></section>
+
+  <section aria-label="รายการที่ตรวจ" class="grid" id="monitors"></section>
+
+  <section class="incidents" aria-labelledby="incTitle">
+    <h2 id="incTitle">ประวัติเหตุขัดข้อง</h2>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th scope="col">ระบบ</th><th scope="col">เริ่ม</th><th scope="col">กลับมา</th><th scope="col">ล่มนาน</th><th scope="col">ชั้นที่ล้มเหลว · สาเหตุ</th></tr></thead>
+        <tbody id="incidents"><tr><td colspan="5" class="empty">ยังไม่มีเหตุขัดข้อง</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+<div id="tip" class="tip" role="tooltip" hidden></div>
+<script src="app.js"></script>
+</body>
+</html>

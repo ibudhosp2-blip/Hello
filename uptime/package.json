@@ -1,0 +1,21 @@
+{
+  "name": "uptime-watch",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ตัวตรวจ uptime ของเว็บ, เครื่อง, พอร์ต และฐานข้อมูล SQL พร้อมหน้า dashboard",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node --no-warnings=ExperimentalWarning src/server.js",
+    "test": "node --test test/*.test.js"
+  },
+  "engines": {
+    "node": ">=22.13"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "mssql": "^11.0.1",
+    "mysql2": "^3.11.5",
+    "pg": "^8.13.1"
+  }
+}

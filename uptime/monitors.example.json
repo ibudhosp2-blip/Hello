@@ -1,0 +1,78 @@
+{
+  "intervalSeconds": 60,
+  "timeoutMs": 10000,
+  "failThreshold": 2,
+  "retentionDays": 90,
+  "networkCanary": "1.1.1.1:53",
+  "monitors": [
+    {
+      "id": "website",
+      "name": "เว็บไซต์หลัก",
+      "type": "http",
+      "url": "https://example.com/health",
+      "expectStatus": 200,
+      "expectText": "ok",
+      "slowMs": 1500
+    },
+    {
+      "id": "gateway",
+      "name": "Router / Gateway",
+      "type": "ping",
+      "host": "192.168.1.1",
+      "intervalSeconds": 30
+    },
+    {
+      "id": "redis",
+      "name": "Redis",
+      "type": "tcp",
+      "host": "10.0.0.20",
+      "port": 6379
+    },
+    {
+      "id": "mysql-main",
+      "name": "MySQL ฐานข้อมูลหลัก",
+      "type": "mysql",
+      "host": "10.0.0.5",
+      "port": 3306,
+      "user": "uptime_monitor",
+      "password": "${MYSQL_MONITOR_PASSWORD}",
+      "database": "app",
+      "query": "SELECT COUNT(*) AS n FROM orders WHERE created_at > NOW() - INTERVAL 1 DAY",
+      "expectValue": { "column": "n", "min": 1 },
+      "slowMs": 500
+    },
+    {
+      "id": "mysql-replica",
+      "name": "MySQL Replica (ความล่าช้าในการ sync)",
+      "type": "mysql",
+      "host": "10.0.0.6",
+      "user": "uptime_monitor",
+      "password": "${MYSQL_MONITOR_PASSWORD}",
+      "query": "SELECT TIMESTAMPDIFF(SECOND, MAX(created_at), NOW()) AS lag_s FROM app.orders",
+      "expectValue": { "column": "lag_s", "max": 120 }
+    },
+    {
+      "id": "postgres",
+      "name": "PostgreSQL",
+      "type": "postgres",
+      "host": "10.0.0.7",
+      "port": 5432,
+      "user": "uptime_monitor",
+      "password": "${PG_MONITOR_PASSWORD}",
+      "database": "app",
+      "query": "SELECT 1 AS ok"
+    },
+    {
+      "id": "sqlserver",
+      "name": "SQL Server",
+      "type": "mssql",
+      "host": "10.0.0.8",
+      "port": 1433,
+      "user": "uptime_monitor",
+      "password": "${MSSQL_MONITOR_PASSWORD}",
+      "database": "App",
+      "query": "SELECT 1 AS ok",
+      "trustServerCertificate": true
+    }
+  ]
+}
