@@ -1,0 +1,674 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>เอกสารรับรองความพิการ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap">
+<style>
+/* Layout: desktop/tablet = the paper form itself (A4 landscape) with live inputs;
+   phone (<760px) = stacked cards 1–7 → สรุป → ลงชื่อ. Print always uses the paper form. */
+:root{
+  --ink:#1b1d22;        /* form text */
+  --line:#2a2d33;       /* table rules */
+  --dot:#8a8f99;        /* dotted fill-in lines */
+  --muted:#6b7180;
+  --paper:#ffffff;
+  --desk:#e9ebef;       /* backdrop around the paper */
+  --accent:#1f5fae;     /* ticks, focus, active controls */
+  --accent-soft:#e6eef9;
+  --bad:#b4232c;        /* พิการ */
+  --bad-soft:#fbe9ea;
+  --ok:#1d7a46;         /* ไม่พิการ */
+  --ok-soft:#e5f4ec;
+  --font:"Sarabun","Leelawadee UI","Tahoma",sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+[hidden]{display:none !important}
+html,body{margin:0}
+body{background:var(--desk);color:var(--ink);font-family:var(--font);font-size:14px;line-height:1.45;-webkit-text-size-adjust:100%}
+button{font-family:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+
+/* ---------- toolbar ---------- */
+.bar{position:sticky;top:0;z-index:20;background:var(--ink);color:#fff;display:flex;align-items:center;gap:10px;
+  padding-block:8px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.bar h1{font-size:16px;font-weight:600;margin:0;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar button{border:1px solid rgba(255,255,255,.35);background:transparent;color:#fff;border-radius:6px;padding:6px 12px;font-size:14px;cursor:pointer}
+.bar button.pri{background:#fff;color:var(--ink);border-color:#fff;font-weight:600}
+.bar .confirm{display:flex;gap:6px;align-items:center;font-size:13px}
+
+/* ---------- custom tick boxes (print exactly like the paper) ---------- */
+.ck{display:inline-flex;align-items:baseline;gap:3px;cursor:pointer;white-space:nowrap}
+.ck input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+.box{display:inline-block;width:.95em;height:.95em;border:1.3px solid var(--line);position:relative;top:.12em;flex:none;background:#fff}
+.ck input:checked + .box::after{content:"";position:absolute;left:.26em;top:.02em;width:.28em;height:.56em;border:solid var(--accent);border-width:0 .14em .14em 0;transform:rotate(45deg)}
+.par{flex:none;white-space:nowrap}
+.par::before{content:"(\00a0\00a0\00a0)"}
+.ck input:checked + .par::before{content:"(\2713)";color:var(--accent);font-weight:700}
+.ck input:focus-visible + .box,.ck input:focus-visible + .par{outline:2px solid var(--accent);outline-offset:1px}
+
+/* dotted fill-in line */
+.ln{font:inherit;color:var(--accent);border:0;border-bottom:1.2px dotted var(--dot);background:transparent;padding:0 2px;height:1.45em;min-width:0;border-radius:0;outline:none}
+.ln:focus{border-bottom:1.5px solid var(--accent);background:var(--accent-soft)}
+select.ln{-webkit-appearance:none;appearance:none;cursor:pointer;padding-right:2px}
+.ln.w2{width:2.6em}.ln.w3{width:3.4em}.ln.w4{width:5em}.ln.w6{width:7.5em}.ln.w8{width:10em}.ln.wf{flex:1;width:auto}
+.ln.mono{font-variant-numeric:tabular-nums;letter-spacing:.04em}
+.cid-ok{color:var(--ok);font-weight:600;font-size:.85em}
+.cid-bad{color:var(--bad);font-weight:600;font-size:.85em}
+
+/* ---------- paper form (desktop / tablet / print) ---------- */
+.desk{padding-block:18px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.scroll{overflow-x:auto}
+.paper{background:var(--paper);max-width:1200px;min-width:740px;margin:0 auto;padding:22px 26px 26px;border:1.6px solid var(--ink);box-shadow:0 2px 14px rgba(20,30,50,.12);font-size:13.5px}
+.hd{display:flex;flex-direction:column;gap:4px}
+.hrow{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 6px}
+.hrow.right{justify-content:flex-end;font-weight:600}
+.hrow.c{justify-content:center}
+.doc-title{font-weight:700;font-size:1.25em;letter-spacing:.01em}
+.grow{display:flex;align-items:baseline;gap:4px;flex:1;min-width:8em}
+
+table.ft{width:100%;border-collapse:collapse;margin-top:8px;table-layout:fixed}
+.ft th,.ft td{border:1px solid var(--line);vertical-align:top;padding:3px 5px}
+.ft th{font-weight:700;text-align:center;vertical-align:middle;padding:4px 3px}
+.ft th.r{font-size:.82em;font-weight:600;line-height:1.15;padding:3px 1px}
+.ft .ty{font-weight:700}
+.ft .ty small{display:block;font-weight:400;padding-left:.6em}
+.ft .gp{font-size:.88em;line-height:1.35}
+.ft .gp b{font-weight:400}
+.ft td.rc{padding:0;vertical-align:middle}
+.cell{display:flex;align-items:center;justify-content:center;width:100%;height:100%;min-height:2.6em;cursor:pointer}
+.cell input{position:absolute;opacity:0;width:1px;height:1px}
+.cell .tk{font-size:1.25em;line-height:1;color:transparent;font-weight:700}
+.cell input:checked + .tk{color:var(--accent)}
+.cell input[data-v="yes"]:checked + .tk{color:var(--bad)}
+.cell input[data-v="no"]:checked + .tk{color:var(--ok)}
+.cell input[data-v=""]:checked + .tk{color:var(--muted)}
+.cell:hover{background:var(--accent-soft)}
+.cell input:focus-visible + .tk{outline:2px solid var(--accent)}
+.ft .dt,.ft .du,.ft .cz{font-size:.86em;line-height:1.5}
+.ft .cz .ck,.ft .dt .ck{white-space:normal}
+.di{display:flex;flex-wrap:wrap;align-items:baseline;gap:0 6px;margin-bottom:2px}
+.subs{display:flex;flex-wrap:wrap;gap:0 8px;align-items:baseline}
+.subs.block{flex-direction:column;padding-left:1.2em;width:100%}
+.sub{display:inline-flex;align-items:baseline;gap:3px}
+.dl{display:flex;align-items:baseline;gap:4px;width:100%}
+.du{display:flex;flex-direction:column;gap:2px}
+.du .yr{display:flex;align-items:baseline;gap:3px;padding-left:1.3em;flex-wrap:wrap}
+.czg{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 8px}
+.czg .ck{min-width:0}
+.czg .full{grid-column:1/-1;display:flex;align-items:baseline;gap:4px}
+
+.sum{margin-top:6px;font-size:.92em}
+.sum .lead{font-weight:600}
+.sumg{display:grid;grid-template-columns:1fr 1fr;gap:4px 24px;margin-top:4px}
+.sumc{display:flex;flex-direction:column;gap:3px}
+.opin{display:grid;grid-template-columns:auto 1fr;gap:2px 14px;padding-left:2.2em}
+.opin .lbl{font-weight:700;grid-row:span 3}
+.opin .o{display:flex;align-items:baseline;gap:4px;flex-wrap:wrap}
+.signrow{display:grid;grid-template-columns:1fr 1fr;margin-top:10px;align-items:end}
+.sign{display:flex;flex-direction:column;align-items:center;gap:3px;justify-self:end}
+.sign .r{display:flex;align-items:baseline;gap:4px}
+.sigline{position:relative;display:inline-flex;align-items:flex-end;justify-content:center;width:13em;height:1.6em;border-bottom:1.2px dotted var(--dot);cursor:pointer}
+.sigline img{position:absolute;bottom:-.3em;max-height:3.2em;max-width:100%}
+.sigline .hint{font-size:.8em;color:var(--accent)}
+.stamp{text-align:center;justify-self:center;align-self:end}
+.stamp u{display:block}
+
+.paper{font-size:clamp(12px,1.05vw + 2px,13.5px)}
+.tip{max-width:1200px;margin:10px auto 0;color:var(--muted);font-size:13px}
+
+/* ---------- phone ---------- */
+.mob{display:none}
+@media (max-width:759px){
+  .desk{display:none}
+  .mob{display:flex;flex-direction:column;gap:10px;padding-block:12px 96px;padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px));font-size:15px}
+}
+.mcard{background:var(--paper);border:1px solid #d6d9e0;border-radius:10px;padding:12px}
+.mcard h2{font-size:15px;margin:0 0 8px;font-weight:700}
+.mf{display:flex;flex-direction:column;gap:2px;margin-bottom:10px}
+.mf:last-child{margin-bottom:0}
+.mf > span{font-size:12.5px;color:var(--muted)}
+.mf .ln,.mrow .ln{font-size:16px;height:2em}
+.mrow{display:flex;gap:8px;align-items:flex-start}
+.mrow .mf{flex:1;min-width:0}
+.mchips{display:flex;flex-wrap:wrap;gap:6px 14px}
+.msec-title{font-size:12.5px;color:var(--muted);margin:6px 2px -2px;letter-spacing:.02em}
+
+details.mc{background:var(--paper);border:1px solid #d6d9e0;border-radius:10px;overflow:hidden}
+details.mc > summary{list-style:none;display:flex;align-items:center;gap:10px;padding:11px 12px;cursor:pointer}
+details.mc > summary::-webkit-details-marker{display:none}
+.num{flex:none;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:14px;border:1.5px solid currentColor}
+.mt{flex:1;min-width:0;font-weight:700;line-height:1.25}
+.mt small{display:block;font-weight:500;font-size:12.5px}
+.chev{flex:none;transition:transform .15s;color:var(--muted)}
+details[open] .chev{transform:rotate(90deg)}
+details.mc.na > summary{color:#a3a8b3}
+details.mc.na .mt{font-weight:500}
+details.mc.na .mt small{color:#a3a8b3}
+details.mc.done .mt small{color:var(--ok)}
+details.mc.done.has .mt small{color:var(--bad)}
+details.mc.done.has .num{background:var(--bad);border-color:var(--bad);color:#fff}
+details.mc.done:not(.has) .num{background:var(--ok);border-color:var(--ok);color:#fff}
+.mb{border-top:1px solid #e3e5ea;padding:4px 12px 12px;display:flex;flex-direction:column}
+.ms{padding-top:10px}
+.ms h4{margin:0 0 6px;font-size:12.5px;color:var(--muted);font-weight:600;letter-spacing:.02em}
+.mg{padding:6px 0 8px;border-bottom:1px dashed #e3e5ea}
+.mg:last-child{border-bottom:0}
+.mg b{display:block}
+.mg .desc{font-size:12.5px;color:var(--muted);line-height:1.35;margin:1px 0 6px}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid #c9cdd6;border-radius:8px;overflow:hidden}
+.seg label{position:relative;text-align:center;padding:7px 2px;font-size:14px;cursor:pointer;border-left:1px solid #c9cdd6}
+.seg label:first-child{border-left:0}
+.seg input{position:absolute;opacity:0;width:1px;height:1px}
+.seg label:has(input:checked){font-weight:700}
+.seg label:has(input[data-v="no"]:checked){background:var(--ok-soft);color:var(--ok)}
+.seg label:has(input[data-v="yes"]:checked){background:var(--bad-soft);color:var(--bad)}
+.seg label:has(input[data-v=""]:checked){background:#eef0f3;color:var(--muted)}
+.seg label:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:-2px}
+.mob .dt,.mob .du,.mob .cz{font-size:15px;line-height:2}
+.mob .box{width:1.05em;height:1.05em}
+.mob .czg{gap:0 14px}
+.mob .ck{white-space:normal}
+.mob .opin{padding-left:0;grid-template-columns:1fr}
+.mob .opin .lbl{grid-row:auto}
+.mob .sumc{gap:6px}
+.mob .sigline{width:100%;height:3.4em}
+.mob .sigline img{max-height:3.6em}
+.mfoot{display:none;position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--paper);border-top:1px solid #d6d9e0;gap:8px;
+  padding-top:8px;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px))}
+@media (max-width:759px){.mfoot{display:flex}}
+.mfoot .prog{flex:1;font-size:13px;color:var(--muted);align-self:center;min-width:0}
+.mfoot button{border:0;border-radius:8px;padding:10px 18px;font-size:15px;font-weight:600;background:var(--ink);color:#fff;cursor:pointer}
+
+/* ---------- signature pad ---------- */
+.modal{position:fixed;inset:0;z-index:50;background:rgba(15,20,30,.55);display:grid;place-items:center;padding:16px}
+.pad{background:var(--paper);border-radius:12px;padding:14px;width:min(560px,100%);display:flex;flex-direction:column;gap:10px}
+.pad h3{margin:0;font-size:16px}
+.pad canvas{width:100%;height:200px;border:1px dashed #9aa0ab;border-radius:8px;touch-action:none;background:#fff}
+.pad .acts{display:flex;gap:8px;justify-content:flex-end}
+.pad button{border:1px solid #c9cdd6;background:#fff;border-radius:7px;padding:8px 14px;font-size:14px;cursor:pointer}
+.pad button.pri{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+/* ---------- print: always the paper form, A4 landscape, one page ---------- */
+@page{size:A4 landscape;margin:7mm 8mm}
+@media print{
+  body{background:#fff}
+  .bar,.mob,.mfoot,.tip,.modal{display:none !important}
+  * {-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+/* body.pm = print layout; added just before printing so the page can be measured and scaled to one sheet */
+.pm .desk{display:block !important;padding:0}
+.pm .scroll{overflow:visible}
+.pm .paper{max-width:none;min-width:0;width:281mm;margin:0;box-shadow:none;padding:4mm 6mm 5mm;font-size:9pt;line-height:1.28;border-width:1.2pt;transform-origin:0 0}
+.pm .ln{color:var(--ink)}
+.pm .ln:focus{background:transparent}
+.pm .sigline .hint,.pm .cidst{display:none}
+.pm .cell .tk{color:transparent !important}
+.pm .cell input[data-v="yes"]:checked + .tk,.pm .cell input[data-v="no"]:checked + .tk{color:var(--ink) !important}
+.pm .cell{min-height:0}
+.pm .ft .gp,.pm .ft .dt,.pm .ft .du-wrap,.pm .ft .cz{line-height:1.3 !important}
+.pm .ft th,.pm .ft td{padding:1.5px 4px}
+.pm .ck input:checked + .box::after{border-color:var(--ink)}
+.pm .ck input:checked + .par::before{color:var(--ink)}
+@media (prefers-reduced-motion:reduce){.chev{transition:none}}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <h1>เอกสารรับรองความพิการ</h1>
+  <span class="confirm" id="clearConfirm" hidden>ล้างข้อมูลทั้งหมด? <button id="clearYes" type="button">ล้าง</button><button id="clearNo" type="button">ยกเลิก</button></span>
+  <button id="clearBtn" type="button">ล้างฟอร์ม</button>
+  <button id="printBtn" class="pri" type="button">พิมพ์</button>
+</header>
+
+<main class="desk"><div class="scroll"><div class="paper" id="paper"></div></div>
+  <p class="tip">คลิกช่อง ผลการประเมิน เพื่อติ๊ก (ค่าเริ่มต้น = ไม่ประเมิน) · ติ๊กรายละเอียดแล้วระบบจะใส่ "พิการ" ให้อัตโนมัติ · ข้อมูลเก็บไว้ในแท็บนี้จนกว่าจะปิดแท็บหรือกดล้างฟอร์ม</p>
+</main>
+
+<main class="mob" id="mob"></main>
+<div class="mfoot mob-only" id="mfoot"><span class="prog" id="prog"></span><button type="button" id="printBtn2">พิมพ์</button></div>
+
+<div class="modal" id="sigModal" hidden>
+  <div class="pad" role="dialog" aria-modal="true" aria-labelledby="sigTitle">
+    <h3 id="sigTitle">ลงลายมือชื่อแพทย์</h3>
+    <canvas id="sigCanvas"></canvas>
+    <div class="acts">
+      <button type="button" id="sigClear">ล้าง</button>
+      <button type="button" id="sigRemove">ไม่ใช้ลายเซ็น</button>
+      <button type="button" id="sigCancel">ยกเลิก</button>
+      <button type="button" id="sigSave" class="pri">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ===================== form definition ===================== */
+const CATS = [
+  {n:1, title:'ประเภทความพิการทางการเห็น', short:'ทางการเห็น', note:'(ประเมินจากข้างที่ดีกว่า (ข้างที่ดีที่สุด))',
+   groups:[
+    {name:'ตาบอด', desc:'ระดับแย่กว่าหรือน้อยกว่า 3 ส่วน 60 เมตร หรือ 10 ส่วน 200 ฟุต จนถึงไม่สามารถรับแสงได้ หรือลานสายตาแคบกว่า 10 องศา'},
+    {name:'ตาเลือนราง', desc:'ระดับแย่กว่าหรือน้อยกว่า 6 ส่วน 18 เมตร หรือ 20 ส่วน 70 ฟุต จนถึง 3 ส่วน 60 เมตร หรือ 10 ส่วน 200 ฟุต หรือลานสายตาแคบกว่า 30 องศา ลงไปจนถึง 10 องศา'}],
+   detail:[
+    {k:'blind', label:'ตาบอด', g:0, subs:[{k:'L',label:'ซ้าย'},{k:'R',label:'ขวา'}]},
+    {k:'low', label:'ตาเลือนราง', g:1, subs:[{k:'L',label:'ซ้าย'},{k:'R',label:'ขวา'}]}]},
+  {n:2, title:'ประเภทความพิการทางการได้ยินหรือสื่อความหมาย', short:'ทางการได้ยินหรือสื่อความหมาย', note:'(ประเมินจากข้างที่ดีกว่า)',
+   groups:[
+    {name:'หูหนวก', desc:'สูญเสียตั้งแต่ 80 dB HL ขึ้นไป'},
+    {name:'หูตึง', desc:'สูญเสียน้อยกว่า 80 dB HL ลงมาจนถึง 40 dB HL (ผู้ใหญ่)\nสูญเสียน้อยกว่า 80 dB HL ลงมาจนถึง 35 dB HL (เด็กไม่เกิน 15 ปี)'},
+    {name:'การสื่อความหมาย', desc:''}],
+   detail:[
+    {k:'deaf', label:'หูหนวก', g:0, block:true, subs:[{k:'L',label:'ซ้าย',txt:'w2',unit:'dB HL'},{k:'R',label:'ขวา',txt:'w2',unit:'dB HL'}]},
+    {k:'hoh', label:'หูตึง', g:1, block:true, subs:[{k:'L',label:'ซ้าย',txt:'w2',unit:'dB HL'},{k:'R',label:'ขวา',txt:'w2',unit:'dB HL'}]},
+    {k:'comm', label:'การสื่อความหมาย ระบุ', g:2, txt:'wf'}]},
+  {n:3, title:'ประเภทความพิการทางการเคลื่อนไหวหรือทางร่างกาย', short:'ทางการเคลื่อนไหวหรือทางร่างกาย',
+   groups:[
+    {name:'การเคลื่อนไหว มือ แขน ขา หรือ เท้า', desc:''},
+    {name:'ร่างกาย ศีรษะ ใบหน้า ลำตัว หรือภาพลักษณ์ภายนอก', desc:'*กรณี อวัยวะขาดต้องไม่สามารถหยิบจับสิ่งของในชีวิตประจำวันได้'}],
+   detail:[
+    {k:'move', label:'การเคลื่อนไหว', g:0, block:true, subs:[{k:'amp',label:'ขาด ระบุ',txt:'wf'},{k:'weak',label:'อ่อนแรง ระบุ',txt:'wf'},{k:'oth',label:'อื่น ๆ ระบุ',txt:'wf'}]},
+    {k:'body', label:'ร่างกาย ระบุ', g:1, txt:'wf'}]},
+  {n:4, title:'ประเภทความพิการทางจิตใจหรือพฤติกรรม', short:'ทางจิตใจหรือพฤติกรรม',
+   groups:[
+    {name:'กลุ่มโรคจิตเวช', desc:'*ICD 10 หรือพิจารณาตามคู่มือวินิจฉัยฯ'},
+    {name:'กลุ่มโรคสมองเสื่อม', desc:''}],
+   detail:[
+    {k:'psy', label:'กลุ่มโรคจิตเวช', g:0, txt:'wf', spec:true},
+    {k:'dem', label:'กลุ่มโรคสมองเสื่อม', g:1, txt:'wf', spec:true}]},
+  {n:5, title:'ประเภทความพิการทางสติปัญญา', short:'ทางสติปัญญา',
+   groups:[{name:'ภาวะบกพร่องทางสติปัญญา', desc:'*IQ < 70\nหรือพิจารณาตามคู่มือวินิจฉัยฯ'}],
+   detail:[
+    {k:'dev', label:'พัฒนาการ', g:0, txt:'wf', spec:true},
+    {k:'iq', label:'สติปัญญา', g:0, txt:'wf', spec:true}]},
+  {n:6, title:'ประเภทความพิการทางการเรียนรู้', short:'ทางการเรียนรู้',
+   groups:[{name:'การเรียนรู้', desc:'*Specific Learning Disorder (SLD)\nหรือพิจารณาตามคู่มือวินิจฉัยฯ'}],
+   detail:[
+    {k:'write', label:'ระบุการเขียน', g:0, txt:'wf'},
+    {k:'read', label:'ระบุการอ่าน', g:0, txt:'wf'},
+    {k:'calc', label:'ระบุการคำนวณ', g:0, txt:'wf'},
+    {k:'other', label:'ระบุเรื่องอื่น', g:0, txt:'wf'}]},
+  {n:7, title:'ประเภทความพิการออทิสติก', short:'ออทิสติก',
+   groups:[{name:'กลุ่มออทิสติก', desc:'*Autism spectrum disorder\n*Pervasive developmental disorders'}],
+   detail:[{k:'spec', free:true, g:0}]}
+];
+const CAUSES = [['gen','พันธุกรรม'],['inf','โรคติดเชื้อ'],['road','อุบัติเหตุทางถนน'],['work','อุบัติเหตุจากการทำงาน'],['acc','อุบัติเหตุอื่น ๆ'],['unk','ไม่ทราบสาเหตุ']];
+const MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+const STORE = 'disability-form-v1';
+
+/* ===================== state ===================== */
+let S = {};
+try { S = JSON.parse(sessionStorage.getItem(STORE) || '{}') || {}; } catch(e) { S = {}; }
+function defaults(){
+  const d = new Date();
+  if (S['date.d'] === undefined) S['date.d'] = String(d.getDate());
+  if (S['date.m'] === undefined) S['date.m'] = MONTHS[d.getMonth()];
+  if (S['date.y'] === undefined) S['date.y'] = String(d.getFullYear() + 543);
+}
+defaults();
+let saveT;
+function save(){ clearTimeout(saveT); saveT = setTimeout(()=>{ try{ sessionStorage.setItem(STORE, JSON.stringify(S)); }catch(e){} }, 200); }
+
+/* ===================== html helpers ===================== */
+const esc = s => String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let uid = 0;
+const nid = () => 'f' + (++uid);
+// p: space-separated effects when this field gets a value: "key" -> true, "key=val" -> set, "key?=val" -> set only if empty
+function ck(k, label, o={}){
+  const id = nid();
+  return `<label class="ck" for="${id}"><input type="checkbox" id="${id}" data-k="${k}"${o.v!==undefined?` data-v="${o.v}"`:''}${o.p?` data-p="${o.p}"`:''}><span class="${o.paren?'par':'box'}"></span>${label?`<span>${label}</span>`:''}</label>`;
+}
+function tx(k, cls='w6', o={}){
+  const id = nid();
+  return `<input class="ln ${cls}" id="${id}" type="text" data-k="${k}"${o.p?` data-p="${o.p}"`:''}${o.ph?` placeholder="${esc(o.ph)}"`:''}${o.im?` inputmode="${o.im}"`:''}${o.ml?` maxlength="${o.ml}"`:''} autocomplete="off" aria-label="${esc(o.al||label4(k))}">`;
+}
+function label4(k){ return k; }
+function sel(k, opts, cls='w6', al=''){
+  const id = nid();
+  return `<select class="ln ${cls}" id="${id}" data-k="${k}" aria-label="${esc(al)}">${opts.map(o=>`<option value="${esc(o)}">${esc(o)}</option>`).join('')}</select>`;
+}
+const br = s => esc(s).replace(/\n/g,'<br>');
+
+/* ----- blocks shared by both views ----- */
+function detailHTML(c){
+  return c.detail.map(it=>{
+    const base = `c${c.n}.d.${it.k}`;
+    const g = `c${c.n}.r${it.g}?=yes`;
+    if (it.free){
+      return `<div class="dl">ระบุ ${tx(base+'.1','wf',{p:g,al:'ระบุ'})}</div><div class="dl">${tx(base+'.2','wf',{p:g,al:'ระบุ'})}</div><div class="dl">${tx(base+'.3','wf',{p:g,al:'ระบุ'})}</div>`;
+    }
+    let h = `<div class="di">` + ck(base, it.label, {p:g});
+    if (it.txt) h += tx(base+'.t', it.txt, {p:`${base} ${g}`, al:it.label});
+    if (it.subs){
+      h += `<span class="subs${it.block?' block':''}">` + it.subs.map(s=>{
+        const sk = `${base}.${s.k}`;
+        let x = `<span class="sub">` + ck(sk, s.label, {paren:true, p:`${base} ${g}`});
+        if (s.txt) x += tx(sk+'.t', s.txt, {p:`${sk} ${base} ${g}`, im:'decimal', al:`${it.label} ${s.label}`}) + `<span>${s.unit||''}</span>`;
+        return x + `</span>`;
+      }).join('') + `</span>`;
+    }
+    h += `</div>`;
+    if (it.spec) h += `<div class="dl">ระบุ ${tx(base+'.s','wf',{p:`${base} ${g}`,al:it.label+' ระบุ'})}</div>`;
+    return h;
+  }).join('');
+}
+function durHTML(c){
+  const k = `c${c.n}.dur`;
+  return `<div class="du">${ck(k,'ตั้งแต่เกิด',{v:'birth'})}${ck(k,'ภายหลัง',{v:'later'})}<span class="yr">จำนวน ${tx(`c${c.n}.y`,'w2',{p:`${k}=later`,im:'numeric',al:'จำนวนปี'})}ปี ${tx(`c${c.n}.m`,'w2',{p:`${k}=later`,im:'numeric',al:'จำนวนเดือน'})}เดือน</span></div>`;
+}
+function causeHTML(c){
+  const b = `c${c.n}.cz`;
+  return `<div class="czg">${CAUSES.map(([k,l])=>ck(`${b}.${k}`,l)).join('')}<span class="full">${ck(`${b}.oth`,'โรคอื่น ๆ ระบุ')}${tx(`${b}.oth.t`,'wf',{p:`${b}.oth`,al:'โรคอื่น ๆ ระบุ'})}</span></div>`;
+}
+function cidHTML(cls){
+  return `${tx('pt.cid', cls+' mono', {im:'numeric', ph:'x-xxxx-xxxxx-xx-x', ml:17, al:'เลขประจำตัวประชาชน 13 หลัก'})} <span class="cidst" aria-live="polite"></span>`;
+}
+const TITLES = ['ด.ช./ด.ญ./นาย/นาง/น.ส.','ด.ช.','ด.ญ.','นาย','นาง','น.ส.'];
+const DOCT = ['นพ./พญ.','นพ.','พญ.'];
+
+function sumNoHTML(){
+  return `<div class="sumc">
+    <div>${ck('sum.has','<b>ไม่มีความพิการ / ไม่เข้าเกณฑ์ความพิการทางการแพทย์</b> เพราะ',{v:'no'})}</div>
+    <div class="dl">${tx('sum.no.why','wf',{p:'sum.has=no',al:'เหตุผล'})}</div>
+    <div class="opin"><span class="lbl">ความเห็น</span>
+      <span class="o">${ck('sum.no.o1','ส่งต่อเพื่อประเมินโดยแพทย์ผู้เชี่ยวชาญ',{paren:true,p:'sum.has=no'})}${tx('sum.no.o1.t','wf',{p:'sum.no.o1 sum.has=no',al:'แพทย์ผู้เชี่ยวชาญ'})}</span>
+      <span class="o">${ck('sum.no.o2','ส่งต่อเจ้าหน้าที่เพื่อ',{paren:true,p:'sum.has=no'})}${tx('sum.no.o2.t','wf',{p:'sum.no.o2 sum.has=no',al:'ส่งต่อเจ้าหน้าที่เพื่อ'})}</span>
+      <span class="o">${ck('sum.no.o3','ส่งต่อเพื่อฟื้นฟูสมรรถภาพทางด้าน',{paren:true,p:'sum.has=no'})}
+        ${['med:การแพทย์','edu:การศึกษา','job:อาชีพ','soc:สังคม'].map(x=>{const [k,l]=x.split(':');return ck('sum.no.o3.'+k,l,{p:'sum.no.o3 sum.has=no'});}).join(' ')}</span>
+    </div></div>`;
+}
+function sumYesHTML(){
+  return `<div class="sumc">
+    <div class="dl">${ck('sum.has','<b>มีความพิการ</b> โดยระบุประเภทความพิการ',{v:'yes'})}</div>
+    <div class="dl">${tx('sum.yes.types','wf',{p:'sum.has=yes',al:'ประเภทความพิการ'})}</div>
+    <div class="opin"><span class="lbl">ความเห็น</span>
+      <span class="o">${ck('sum.yes.o1','ส่งต่อเพื่อออกบัตรประจำตัวคนพิการ',{paren:true,p:'sum.has=yes'})}</span>
+      <span class="o">${ck('sum.yes.o2','ส่งต่อ ระบุ',{paren:true,p:'sum.has=yes'})}${tx('sum.yes.o2.t','wf',{p:'sum.yes.o2 sum.has=yes',al:'ส่งต่อ ระบุ'})}</span>
+      <span class="o">${ck('sum.yes.o3','อื่นๆ ระบุ',{paren:true,p:'sum.has=yes'})}${tx('sum.yes.o3.t','wf',{p:'sum.yes.o3 sum.has=yes',al:'อื่นๆ ระบุ'})}</span>
+    </div></div>`;
+}
+const SUM_LEAD = '* สรุปผลการวินิจฉัยโดยพิจารณาจากความพิการตามคู่มือการวินิจฉัยและตรวจประเมินความพิการ ตามประกาศกระทรวงการพัฒนาสังคมและความมั่นคงของมนุษย์ เรื่อง ประเภทและหลักเกณฑ์ความพิการ พ.ศ. 2568 ปรากฏว่าผู้ได้รับการประเมิน';
+const sigLine = () => `<span class="sigline" role="button" tabindex="0" data-sig aria-label="ลงลายมือชื่อ"><span class="hint">แตะเพื่อเซ็น</span></span>`;
+
+/* ===================== desktop / print paper ===================== */
+function paperHTML(){
+  let rows = '';
+  CATS.forEach(c=>{
+    c.groups.forEach((g,i)=>{
+      rows += '<tr>';
+      if (i===0) rows += `<td class="ty" rowspan="${c.groups.length}">${c.n}. ${esc(c.title)}${c.note?`<small>${esc(c.note)}</small>`:''}</td>`;
+      rows += `<td class="gp">- <b>${esc(g.name)}</b>${g.desc?'<br>'+br(g.desc):''}</td>`;
+      ['no','yes',''].forEach(v=>{
+        const id = nid();
+        const lab = {no:'ไม่พิการ',yes:'พิการ','':'ไม่ประเมิน'}[v];
+        rows += `<td class="rc"><label class="cell" for="${id}" title="${lab}"><input type="checkbox" id="${id}" data-k="c${c.n}.r${i}" data-v="${v}" aria-label="${esc(g.name)}: ${lab}"><span class="tk">✓</span></label></td>`;
+      });
+      if (i===0){
+        const rs = c.groups.length;
+        rows += `<td class="dt" rowspan="${rs}">${detailHTML(c)}</td><td class="du-td" rowspan="${rs}"><div class="du-wrap" style="font-size:.86em;line-height:1.5;display:flex;align-items:center;height:100%">${durHTML(c)}</div></td><td class="cz" rowspan="${rs}">${causeHTML(c)}</td>`;
+      }
+      rows += '</tr>';
+    });
+  });
+  return `
+  <div class="hd">
+    <div class="hrow right">เล่มที่ ${tx('book','w4',{al:'เล่มที่'})} เลขที่ ${tx('no','w4',{al:'เลขที่'})}</div>
+    <div class="hrow c"><span class="doc-title">เอกสารรับรองความพิการ</span></div>
+    <div class="hrow"><span class="grow">ชื่อสถานพยาบาลที่ออกเอกสารรับรองความพิการ ${tx('hosp','wf',{al:'ชื่อสถานพยาบาล'})}</span>
+      จังหวัด ${tx('prov','w8',{al:'จังหวัด'})} วัน ${tx('date.d','w2',{im:'numeric',al:'วัน'})} เดือน ${sel('date.m',MONTHS,'w6','เดือน')} พ.ศ. ${tx('date.y','w3',{im:'numeric',al:'พ.ศ.'})}</div>
+    <div class="hrow"><span class="grow">ข้าพเจ้า ${sel('doc.pre',DOCT,'w4','คำนำหน้าแพทย์')} ${tx('doc.name','wf',{al:'ชื่อแพทย์'})}</span>
+      <span class="grow">ใบอนุญาตประกอบวิชาชีพเวชกรรม เลขที่ ${tx('doc.lic','wf',{al:'เลขที่ใบอนุญาต'})}</span>
+      ${ck('doc.type','แพทย์เวชปฏิบัติทั่วไป',{v:'gp'})} ${ck('doc.type','แพทย์เฉพาะทาง สาขา',{v:'sp'})} ${tx('doc.sp','w8',{p:'doc.type=sp',al:'สาขา'})}</div>
+    <div class="hrow"><span class="grow" style="flex:1.4">ได้ประเมิน ${sel('pt.pre',TITLES,'w8','คำนำหน้าผู้รับการประเมิน')} ${tx('pt.name','wf',{al:'ชื่อ-สกุลผู้รับการประเมิน'})}</span>
+      <span>เลขประจำตัวประชาชน ${cidHTML('w8')}</span>
+      <span>ประเภทการตรวจ ${ck('exam','มาด้วยตนเอง',{v:'self'})} ${ck('exam','Tele-medicine',{v:'tele'})}</span></div>
+  </div>
+  <table class="ft">
+    <colgroup><col style="width:15%"><col style="width:23%"><col style="width:3.7%"><col style="width:3.7%"><col style="width:3.9%"><col style="width:18%"><col style="width:12%"><col style="width:20.7%"></colgroup>
+    <thead>
+      <tr><th rowspan="2">ประเภทความพิการ</th><th rowspan="2">กลุ่มความพิการ</th><th colspan="3" class="r" style="font-size:.9em">ผลการประเมิน</th><th rowspan="2">ระบุรายละเอียด<br>ลักษณะความพิการ</th><th rowspan="2">สาเหตุ/ระยะเวลา</th><th rowspan="2">สาเหตุความพิการ</th></tr>
+      <tr><th class="r">ไม่<br>พิการ</th><th class="r">พิการ</th><th class="r">ไม่<br>ประเมิน</th></tr>
+    </thead>
+    <tbody>${rows}</tbody>
+  </table>
+  <div class="sum">
+    <div class="lead">${SUM_LEAD}</div>
+    <div class="sumg">${sumNoHTML()}${sumYesHTML()}</div>
+    <div class="signrow">
+      <div class="sign">
+        <span class="r">ลงชื่อ ${sigLine()} แพทย์ผู้วินิจฉัย และตรวจประเมินความพิการ</span>
+        <span class="r">( ${tx('doc.name','w8',{al:'ชื่อแพทย์ในวงเล็บ'})} )</span>
+        <span class="r">ตำแหน่ง ${tx('doc.pos','w8',{al:'ตำแหน่ง'})}</span>
+      </div>
+      <div class="stamp">ประทับตรา<u>สถานพยาบาลที่ออกเอกสารรับรอง</u></div>
+    </div>
+  </div>`;
+}
+
+/* ===================== phone ===================== */
+const chev = '<svg class="chev" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+function mobHTML(){
+  let h = `<section class="mcard"><h2>ผู้รับการประเมิน</h2>
+    <div class="mrow"><label class="mf" style="flex:0 0 auto"><span>คำนำหน้า</span>${sel('pt.pre',TITLES.map((t,i)=>i?t:'—'),'w4','คำนำหน้า').replace('value="—">—','value="ด.ช./ด.ญ./นาย/นาง/น.ส.">—')}</label>
+      <label class="mf"><span>ชื่อ-สกุล</span>${tx('pt.name','wf',{al:'ชื่อ-สกุล'})}</label></div>
+    <label class="mf"><span>เลขประจำตัวประชาชน 13 หลัก</span><span class="mrow" style="align-items:baseline">${cidHTML('wf')}</span></label>
+    <div class="mf"><span>ประเภทการตรวจ</span><span class="mchips">${ck('exam','มาด้วยตนเอง',{v:'self'})}${ck('exam','Tele-medicine',{v:'tele'})}</span></div>
+  </section>
+  <div class="msec-title">ประเภทความพิการ 1–7 · แตะเพื่อประเมิน</div>`;
+  CATS.forEach(c=>{
+    const segs = c.groups.map((g,i)=>`<div class="mg"><b>${esc(g.name)}</b>${g.desc?`<div class="desc">${br(g.desc)}</div>`:'<div class="desc"></div>'}
+      <div class="seg" role="group" aria-label="ผลการประเมิน ${esc(g.name)}">${['no','yes',''].map(v=>{const id=nid();const l={no:'ไม่พิการ',yes:'พิการ','':'ไม่ประเมิน'}[v];return `<label for="${id}"><input type="checkbox" id="${id}" data-k="c${c.n}.r${i}" data-v="${v}">${l}</label>`;}).join('')}</div></div>`).join('');
+    h += `<details class="mc na" data-cat="${c.n}"><summary><span class="num">${c.n}</span><span class="mt">${esc(c.short)}<small class="st">ไม่ได้ประเมิน</small></span>${chev}</summary>
+      <div class="mb">
+        <div class="ms"><h4>กลุ่มความพิการ · ผลการประเมิน</h4>${segs}</div>
+        <div class="ms"><h4>รายละเอียดลักษณะความพิการ</h4><div class="dt">${detailHTML(c)}</div></div>
+        <div class="ms"><h4>ระยะเวลา</h4>${durHTML(c)}</div>
+        <div class="ms"><h4>สาเหตุความพิการ</h4><div class="cz">${causeHTML(c)}</div></div>
+      </div></details>`;
+  });
+  h += `<div class="msec-title">สรุปผล</div>
+  <section class="mcard sum"><div class="desc" style="font-size:12.5px;color:var(--muted);margin-bottom:8px">${esc(SUM_LEAD)}</div>
+    ${sumNoHTML()}<hr style="border:0;border-top:1px dashed #d6d9e0;margin:12px 0">${sumYesHTML()}</section>
+  <div class="msec-title">ลงชื่อ</div>
+  <section class="mcard">
+    <div class="mf"><span>ลายมือชื่อแพทย์</span>${sigLine()}</div>
+    <div class="mrow"><label class="mf" style="flex:0 0 auto"><span>คำนำหน้า</span>${sel('doc.pre',DOCT,'w4','คำนำหน้าแพทย์')}</label><label class="mf"><span>ชื่อแพทย์</span>${tx('doc.name','wf',{al:'ชื่อแพทย์'})}</label></div>
+    <label class="mf"><span>ตำแหน่ง</span>${tx('doc.pos','wf',{al:'ตำแหน่ง'})}</label>
+    <label class="mf"><span>เลขที่ใบอนุญาตประกอบวิชาชีพเวชกรรม</span>${tx('doc.lic','wf',{al:'เลขที่ใบอนุญาต'})}</label>
+    <div class="mf"><span>ประเภทแพทย์</span><span class="mchips">${ck('doc.type','เวชปฏิบัติทั่วไป',{v:'gp'})}${ck('doc.type','เฉพาะทาง',{v:'sp'})}</span></div>
+    <label class="mf"><span>สาขา (แพทย์เฉพาะทาง)</span>${tx('doc.sp','wf',{p:'doc.type=sp',al:'สาขา'})}</label>
+    <label class="mf"><span>ชื่อสถานพยาบาล</span>${tx('hosp','wf',{al:'ชื่อสถานพยาบาล'})}</label>
+    <div class="mrow"><label class="mf"><span>จังหวัด</span>${tx('prov','wf',{al:'จังหวัด'})}</label></div>
+    <div class="mrow"><label class="mf" style="flex:0 0 3.2em"><span>วัน</span>${tx('date.d','wf',{im:'numeric',al:'วัน'})}</label><label class="mf"><span>เดือน</span>${sel('date.m',MONTHS,'wf','เดือน')}</label><label class="mf" style="flex:0 0 4.2em"><span>พ.ศ.</span>${tx('date.y','wf',{im:'numeric',al:'พ.ศ.'})}</label></div>
+    <div class="mrow"><label class="mf"><span>เล่มที่</span>${tx('book','wf',{al:'เล่มที่'})}</label><label class="mf"><span>เลขที่</span>${tx('no','wf',{al:'เลขที่'})}</label></div>
+  </section>`;
+  return h;
+}
+
+/* ===================== render & sync ===================== */
+const paper = document.getElementById('paper');
+const mob = document.getElementById('mob');
+paper.innerHTML = paperHTML();
+mob.innerHTML = mobHTML();
+
+const fmtCID = d => { const p=[1,4,5,2,1]; let out=[],i=0; for(const n of p){ if(i>=d.length) break; out.push(d.slice(i,i+n)); i+=n; } return out.join('-'); };
+function cidValid(d){
+  if (!/^\d{13}$/.test(d)) return false;
+  let s = 0; for (let i=0;i<12;i++) s += +d[i]*(13-i);
+  return (11 - s%11)%10 === +d[12];
+}
+const get = k => S[k] === undefined ? '' : S[k];
+
+function syncKey(k){
+  document.querySelectorAll(`[data-k="${CSS.escape(k)}"]`).forEach(el=>{
+    if (el.type === 'checkbox'){
+      el.checked = el.dataset.v !== undefined ? get(k) === el.dataset.v : !!S[k];
+    } else if (el !== document.activeElement){
+      const v = get(k);
+      el.value = k === 'pt.cid' ? fmtCID(v) : v;
+      if (el.tagName === 'SELECT' && el.selectedIndex < 0) el.selectedIndex = 0;
+    }
+  });
+}
+function syncAll(){
+  const keys = new Set([...document.querySelectorAll('[data-k]')].map(e=>e.dataset.k));
+  keys.forEach(syncKey);
+  derived();
+  drawSig();
+}
+
+function catState(c){
+  const rs = c.groups.map((_,i)=>get(`c${c.n}.r${i}`));
+  return {done: rs.some(r=>r), has: rs.includes('yes')};
+}
+function derived(){
+  // phone category headers
+  let done = 0;
+  CATS.forEach(c=>{
+    const st = catState(c);
+    if (st.done) done++;
+    const d = mob.querySelector(`details[data-cat="${c.n}"]`);
+    d.classList.toggle('na', !st.done);
+    d.classList.toggle('done', st.done);
+    d.classList.toggle('has', st.has);
+    d.querySelector('.st').textContent = !st.done ? 'ไม่ได้ประเมิน'
+      : 'มีผลการประเมินแล้ว · ' + (st.has ? 'พิการ: ' + c.groups.filter((_,i)=>get(`c${c.n}.r${i}`)==='yes').map(g=>g.name).join(', ') : 'ไม่พิการ');
+  });
+  document.getElementById('prog').textContent = `ประเมินแล้ว ${done}/7 ประเภท`;
+  // CID status
+  const d = get('pt.cid');
+  document.querySelectorAll('.cidst').forEach(s=>{
+    s.className = 'cidst ' + (d.length===13 ? (cidValid(d)?'cid-ok':'cid-bad') : '');
+    s.textContent = !d ? '' : d.length<13 ? `${d.length}/13` : cidValid(d) ? '✓' : 'เลขไม่ถูกต้อง';
+  });
+  // summary: auto-fill disability types until the doctor types their own
+  const types = CATS.filter(c=>catState(c).has).map(c=>c.short);
+  if (!S['sum.yes.types.manual']){
+    const auto = types.join(', ');
+    if (get('sum.yes.types') !== auto){ S['sum.yes.types'] = auto; syncKey('sum.yes.types'); }
+  }
+  if (types.length && !get('sum.has')){ S['sum.has'] = 'yes'; syncKey('sum.has'); }
+}
+
+function applyEffects(el){
+  const p = el.dataset.p; if (!p) return;
+  p.split(' ').forEach(e=>{
+    let m;
+    if ((m = e.match(/^(.+)\?=(.*)$/))){ if (!get(m[1])){ S[m[1]] = m[2]; syncKey(m[1]); } }
+    else if ((m = e.match(/^(.+)=(.*)$/))){ S[m[1]] = m[2]; syncKey(m[1]); }
+    else if (!S[e]){ S[e] = true; syncKey(e); }
+  });
+}
+
+document.addEventListener('change', e=>{
+  const el = e.target; const k = el.dataset && el.dataset.k; if (!k) return;
+  if (el.type === 'checkbox'){
+    if (el.dataset.v !== undefined) S[k] = el.checked ? el.dataset.v : '';
+    else S[k] = el.checked;
+    if (el.checked) applyEffects(el);
+  } else if (el.tagName === 'SELECT'){
+    S[k] = el.value;
+  }
+  syncKey(k); derived(); save();
+});
+document.addEventListener('input', e=>{
+  const el = e.target; const k = el.dataset && el.dataset.k; if (!k || el.type === 'checkbox' || el.tagName === 'SELECT') return;
+  let v = el.value;
+  if (k === 'pt.cid'){
+    v = v.replace(/\D/g,'').slice(0,13);
+    const f = fmtCID(v);
+    if (el.value !== f){ el.value = f; try{ el.setSelectionRange(f.length,f.length); }catch(_){} }
+  }
+  S[k] = v;
+  if (k === 'sum.yes.types') S['sum.yes.types.manual'] = v !== '';
+  if (v.trim()) applyEffects(el);
+  syncKey(k); derived(); save();
+});
+document.addEventListener('focusout', e=>{ const k = e.target.dataset && e.target.dataset.k; if (k) syncKey(k); });
+
+/* ===================== toolbar ===================== */
+// fit the form onto one A4 landscape sheet (page 297x210mm, margins 8/7mm → 281x196mm)
+const MM = 96/25.4;
+function enterPrint(){
+  document.body.classList.add('pm');
+  paper.style.zoom = '';
+  const H = 196*MM*0.96;          // a little slack for print-engine rounding
+  let k = 1;
+  for (let i=0;i<4;i++){          // wider layout at smaller scale → fewer wrapped lines; converge
+    paper.style.width = (281/k)+'mm';
+    k = Math.min(1, H / paper.offsetHeight);
+  }
+  paper.style.width = (281/k)+'mm';
+  paper.style.zoom = k < 1 ? k.toFixed(4) : '';
+}
+function leavePrint(){ document.body.classList.remove('pm'); paper.style.zoom = ''; paper.style.width = ''; }
+window.addEventListener('beforeprint', enterPrint);
+window.addEventListener('afterprint', leavePrint);
+const doPrint = () => { document.activeElement && document.activeElement.blur(); enterPrint(); window.print(); setTimeout(leavePrint, 500); };
+document.getElementById('printBtn').onclick = doPrint;
+document.getElementById('printBtn2').onclick = doPrint;
+const cc = document.getElementById('clearConfirm'), cb = document.getElementById('clearBtn');
+cb.onclick = ()=>{ cc.hidden = false; cb.hidden = true; };
+document.getElementById('clearNo').onclick = ()=>{ cc.hidden = true; cb.hidden = false; };
+document.getElementById('clearYes').onclick = ()=>{
+  // keep hospital / doctor details, clear the patient and the assessment
+  const keep = ['hosp','prov','doc.pre','doc.name','doc.lic','doc.type','doc.sp','doc.pos','sign.img','book'];
+  const kept = {}; keep.forEach(k=>{ if (S[k]!==undefined) kept[k]=S[k]; });
+  S = kept; defaults(); save(); syncAll();
+  mob.querySelectorAll('details').forEach(d=>d.open=false);
+  cc.hidden = true; cb.hidden = false;
+};
+
+/* ===================== signature pad ===================== */
+const modal = document.getElementById('sigModal'), cv = document.getElementById('sigCanvas');
+const ctx = cv.getContext('2d');
+let drawing = false, dirty = false;
+function openPad(){
+  modal.hidden = false;
+  const r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+  cv.width = r.width*dpr; cv.height = r.height*dpr;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.lineWidth = 2.2; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#13213d';
+  ctx.clearRect(0,0,r.width,r.height); dirty = false;
+}
+const pt = e => { const r = cv.getBoundingClientRect(); return [e.clientX-r.left, e.clientY-r.top]; };
+cv.addEventListener('pointerdown', e=>{ drawing = true; cv.setPointerCapture(e.pointerId); const [x,y]=pt(e); ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x+.1,y+.1); ctx.stroke(); dirty = true; });
+cv.addEventListener('pointermove', e=>{ if(!drawing) return; const [x,y]=pt(e); ctx.lineTo(x,y); ctx.stroke(); });
+['pointerup','pointercancel'].forEach(t=>cv.addEventListener(t, ()=>{ drawing = false; }));
+document.getElementById('sigClear').onclick = ()=>{ ctx.clearRect(0,0,cv.width,cv.height); dirty = false; };
+document.getElementById('sigCancel').onclick = ()=>{ modal.hidden = true; };
+document.getElementById('sigRemove').onclick = ()=>{ delete S['sign.img']; save(); drawSig(); modal.hidden = true; };
+document.getElementById('sigSave').onclick = ()=>{ if (dirty){ S['sign.img'] = trimCanvas(); save(); drawSig(); } modal.hidden = true; };
+function trimCanvas(){
+  const w = cv.width, h = cv.height, d = ctx.getImageData(0,0,w,h).data;
+  let x0=w,y0=h,x1=0,y1=0;
+  for (let y=0;y<h;y++) for (let x=0;x<w;x++) if (d[(y*w+x)*4+3]){ if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y; }
+  if (x1<x0) return cv.toDataURL('image/png');
+  const pad = 6, c2 = document.createElement('canvas');
+  c2.width = x1-x0+pad*2; c2.height = y1-y0+pad*2;
+  c2.getContext('2d').drawImage(cv, x0-pad, y0-pad, c2.width, c2.height, 0, 0, c2.width, c2.height);
+  return c2.toDataURL('image/png');
+}
+function drawSig(){
+  document.querySelectorAll('[data-sig]').forEach(s=>{
+    const img = S['sign.img'];
+    s.innerHTML = img ? `<img src="${img}" alt="ลายมือชื่อแพทย์">` : '<span class="hint">แตะเพื่อเซ็น</span>';
+  });
+}
+document.addEventListener('click', e=>{ if (e.target.closest('[data-sig]')) openPad(); });
+document.addEventListener('keydown', e=>{
+  if ((e.key==='Enter'||e.key===' ') && e.target.matches && e.target.matches('[data-sig]')){ e.preventDefault(); openPad(); }
+  if (e.key==='Escape' && !modal.hidden) modal.hidden = true;
+});
+
+syncAll();
+})();
+</script>
+</body>
+</html>
